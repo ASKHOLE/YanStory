@@ -1,0 +1,26 @@
+{
+  "name": "@yanstory/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "YanStory CLI",
+  "type": "module",
+  "bin": {
+    "yanstory": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@yanstory/core": "workspace:*",
+    "commander": "^13.0.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  }
+}
