@@ -19,8 +19,14 @@ export class LLMStub {
 
     for (const rule of this.responses) {
       if (rule.pattern.test(prompt)) {
+        const chunks = options.stream ? rule.response.split(" ") : [rule.response];
+        let content = "";
+        for (const chunk of chunks) {
+          content += chunk;
+          options.onChunk?.(chunk);
+        }
         return {
-          content: rule.response,
+          content,
           model: options.model ?? "stub",
           usage: {
             promptTokens: prompt.length,
@@ -31,8 +37,10 @@ export class LLMStub {
       }
     }
 
+    const fallback = `[stub] No matching response for prompt: ${prompt.slice(0, 80)}...`;
+    options.onChunk?.(fallback);
     return {
-      content: `[stub] No matching response for prompt: ${prompt.slice(0, 80)}...`,
+      content: fallback,
       model: options.model ?? "stub",
       usage: { promptTokens: prompt.length, completionTokens: 0, totalTokens: prompt.length },
     };
