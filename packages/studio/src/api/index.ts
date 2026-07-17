@@ -5,6 +5,7 @@ import { createBooksRoutes } from "./routes/books.js";
 import { createOperationsRoutes } from "./routes/operations.js";
 import { createConstraintsRoutes } from "./routes/constraints.js";
 import { createSnapshotsRoutes } from "./routes/snapshots.js";
+import { createPatchesRoutes } from "./routes/patches.js";
 
 export function createApiApp(manager: BookManager): Hono {
   const app = new Hono();
@@ -17,6 +18,7 @@ export function createApiApp(manager: BookManager): Hono {
   app.route("/books", createOperationsRoutes(manager));
   app.route("/books", createConstraintsRoutes(manager));
   app.route("/books", createSnapshotsRoutes(manager));
+  app.route("/books", createPatchesRoutes(manager));
 
   return app;
 }

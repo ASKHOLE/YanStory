@@ -1,3 +1,7 @@
+import type { PatchProposal, ApplyPatchResult } from "@yanstory/core";
+
+export type { PatchProposal, ApplyPatchResult } from "@yanstory/core";
+
 const API_BASE = "/api";
 
 async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
@@ -106,5 +110,22 @@ export const api = {
   restoreSnapshot: (id: string, snapshotId: string) =>
     fetchJson<{ ok: boolean }>(`/books/${id}/snapshots/${snapshotId}/restore`, {
       method: "POST",
+    }),
+
+  listChapters: (id: string) =>
+    fetchJson<{ chapters: Array<{ id: string; label: string; chapterNumber: number; contentUri: string }> }>(
+      `/books/${id}/chapters`
+    ),
+
+  proposePatch: (id: string, chapterId: string, markdown: string) =>
+    fetchJson<{ proposal: PatchProposal }>(`/books/${id}/propose-patch`, {
+      method: "POST",
+      body: JSON.stringify({ chapterId, markdown }),
+    }),
+
+  applyPatch: (id: string, proposal: PatchProposal) =>
+    fetchJson<{ applied: number } & ApplyPatchResult>(`/books/${id}/apply-patch`, {
+      method: "POST",
+      body: JSON.stringify({ proposal }),
     }),
 };

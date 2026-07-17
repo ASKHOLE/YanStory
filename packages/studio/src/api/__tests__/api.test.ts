@@ -104,4 +104,54 @@ describe("Studio API", () => {
     const data = JSON.parse(text);
     expect(data.error).toBe("ConstraintError");
   });
+
+  it("proposes and applies a patch from edited markdown", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Patch Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const book = await manager.getBook(id);
+    book.setLLMClient(createLLMStub());
+
+    const composeRes = await app.request(`/books/${id}/compose`, {
+      method: "POST",
+      body: JSON.stringify({ intent: "introduce hero", targetWords: 100 }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(composeRes.status).toBe(200);
+
+    const chaptersRes = await app.request(`/books/${id}/chapters`);
+    expect(chaptersRes.status).toBe(200);
+    const { chapters } = await chaptersRes.json();
+    expect(chapters.length).toBe(1);
+    const chapterId = chapters[0].id;
+
+    const projectionRes = await app.request(`/books/${id}/projection/${chapterId}`);
+    expect(projectionRes.status).toBe(200);
+    const { markdown } = await projectionRes.json();
+    const editedMarkdown = `${markdown}\n\nAdditional paragraph for patch test.`;
+
+    const proposeRes = await app.request(`/books/${id}/propose-patch`, {
+      method: "POST",
+      body: JSON.stringify({ chapterId, markdown: editedMarkdown }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(proposeRes.status).toBe(200);
+    const { proposal } = await proposeRes.json();
+    expect(proposal.operations.length).toBeGreaterThan(0);
+    expect(proposal.operations.some((op: { op: string }) => op.op === "create")).toBe(true);
+
+    const applyRes = await app.request(`/books/${id}/apply-patch`, {
+      method: "POST",
+      body: JSON.stringify({ proposal }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(applyRes.status).toBe(200);
+    const { applied } = await applyRes.json();
+    expect(applied).toBe(proposal.operations.length);
+  });
 });
