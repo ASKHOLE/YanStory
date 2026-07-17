@@ -1,10 +1,24 @@
 import { Hono } from "hono";
-import { helloCore } from "@yanstory/core";
+import type { BookManager } from "./book-manager.js";
+import { apiErrorHandler } from "./middleware/error.js";
+import { createBooksRoutes } from "./routes/books.js";
+import { createOperationsRoutes } from "./routes/operations.js";
+import { createConstraintsRoutes } from "./routes/constraints.js";
+import { createSnapshotsRoutes } from "./routes/snapshots.js";
 
-const app = new Hono();
+export function createApiApp(manager: BookManager): Hono {
+  const app = new Hono();
 
-app.get("/api/health", (c) => {
-  return c.json({ ok: true, message: helloCore() });
-});
+  app.get("/health", (c) => c.json({ ok: true }));
 
-export default app;
+  app.onError(apiErrorHandler);
+
+  app.route("/books", createBooksRoutes(manager));
+  app.route("/books", createOperationsRoutes(manager));
+  app.route("/books", createConstraintsRoutes(manager));
+  app.route("/books", createSnapshotsRoutes(manager));
+
+  return app;
+}
+
+export { BookManager } from "./book-manager.js";

@@ -8,3 +8,5 @@ coverage/
 *.tgz
 CLAUDE.md
 .omc/
+.claude/
+packages/studio/books/
