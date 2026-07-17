@@ -51,6 +51,39 @@ export interface ConstraintItem {
   dsl: string;
 }
 
+export interface SearchResult {
+  nodeId: string;
+  type: string;
+  label: string;
+  score: number;
+}
+
+export interface CharacterItem {
+  id: string;
+  label: string;
+  appearsIn: Array<{ sceneId: string; chapterId?: string; chapterNumber: number }>;
+}
+
+export interface EventItem {
+  id: string;
+  label: string;
+  when: string | null;
+  order: number;
+}
+
+export interface RelationshipNode {
+  id: string;
+  label: string;
+  type: string;
+}
+
+export interface RelationshipLink {
+  source: string;
+  target: string;
+  strength: number;
+  scenes: string[];
+}
+
 export const api = {
   health: () => fetchJson<{ ok: boolean }>("/health"),
 
@@ -128,4 +161,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ proposal }),
     }),
+
+  search: (id: string, query: string, nodeTypes?: string[], topK?: number, threshold?: number) =>
+    fetchJson<{ results: SearchResult[] }>(`/books/${id}/search`, {
+      method: "POST",
+      body: JSON.stringify({ query, nodeTypes, topK, threshold }),
+    }),
+
+  listCharacters: (id: string) => fetchJson<{ characters: CharacterItem[] }>(`/books/${id}/characters`),
+
+  listEvents: (id: string) => fetchJson<{ events: EventItem[] }>(`/books/${id}/events`),
+
+  listRelationships: (id: string) =>
+    fetchJson<{ nodes: RelationshipNode[]; links: RelationshipLink[] }>(`/books/${id}/relationships`),
 };

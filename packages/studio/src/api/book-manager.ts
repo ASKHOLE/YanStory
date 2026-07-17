@@ -8,12 +8,15 @@ import {
   createLLMClient,
   loadSecrets,
   resolveLLMConfig,
+  createHashEmbeddingProvider,
   type LLMClient,
+  type EmbeddingProvider,
 } from "@yanstory/core";
 
 export interface BookManagerOptions {
   projectRoot: string;
   useStub?: boolean;
+  embeddingProvider?: EmbeddingProvider;
 }
 
 export class BookManager {
@@ -21,10 +24,12 @@ export class BookManager {
   private readonly useStub: boolean;
   private readonly openBooks = new Map<string, Book>();
   private llmClient: LLMClient | undefined;
+  private embeddingProvider: EmbeddingProvider;
 
   constructor(options: BookManagerOptions) {
     this.projectRoot = path.resolve(options.projectRoot);
     this.useStub = options.useStub ?? false;
+    this.embeddingProvider = options.embeddingProvider ?? createHashEmbeddingProvider();
   }
 
   async initialize(): Promise<void> {
@@ -81,8 +86,9 @@ export class BookManager {
   }
 
   private attachClient(book: Book): void {
+    book.setEmbeddingProvider(this.embeddingProvider);
     if (this.useStub) {
-      // Stub is provided per-request in tests; do not attach globally.
+      // Stub LLM is provided per-request in tests; do not attach globally.
       return;
     }
     if (this.llmClient) {

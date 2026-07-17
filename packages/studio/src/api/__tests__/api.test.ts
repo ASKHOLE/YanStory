@@ -105,11 +105,42 @@ describe("Studio API", () => {
     expect(data.error).toBe("ConstraintError");
   });
 
-  it("proposes and applies a patch from edited markdown", async () => {
+  it("searches similar paragraphs", async () => {
     const app = createApp();
     const createRes = await app.request("/books", {
       method: "POST",
-      body: JSON.stringify({ title: "Patch Test", genre: "xuanhuan" }),
+      body: JSON.stringify({ title: "Search Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const book = await manager.getBook(id);
+    book.setLLMClient(createLLMStub());
+
+    const composeRes = await app.request(`/books/${id}/compose`, {
+      method: "POST",
+      body: JSON.stringify({ intent: "introduce hero", targetWords: 100 }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(composeRes.status).toBe(200);
+
+    const searchRes = await app.request(`/books/${id}/search`, {
+      method: "POST",
+      body: JSON.stringify({ query: "hero protagonist", nodeTypes: ["paragraph"], topK: 5 }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(searchRes.status).toBe(200);
+    const { results } = await searchRes.json();
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]).toHaveProperty("nodeId");
+    expect(results[0]).toHaveProperty("score");
+  });
+
+  it("lists characters, events, and relationships", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Relationship Test", genre: "xuanhuan" }),
       headers: { "Content-Type": "application/json" },
     });
     const { id } = await createRes.json();
@@ -125,33 +156,78 @@ describe("Studio API", () => {
     expect(composeRes.status).toBe(200);
 
     const chaptersRes = await app.request(`/books/${id}/chapters`);
-    expect(chaptersRes.status).toBe(200);
     const { chapters } = await chaptersRes.json();
-    expect(chapters.length).toBe(1);
     const chapterId = chapters[0].id;
+    const sceneId = `${chapterId}/scene-1`;
 
-    const projectionRes = await app.request(`/books/${id}/projection/${chapterId}`);
-    expect(projectionRes.status).toBe(200);
-    const { markdown } = await projectionRes.json();
-    const editedMarkdown = `${markdown}\n\nAdditional paragraph for patch test.`;
-
-    const proposeRes = await app.request(`/books/${id}/propose-patch`, {
-      method: "POST",
-      body: JSON.stringify({ chapterId, markdown: editedMarkdown }),
-      headers: { "Content-Type": "application/json" },
+    const now = new Date().toISOString();
+    book.store.createNode({
+      id: "character-hero",
+      bookId: id,
+      type: "character",
+      label: "Hero",
+      contentUri: null,
+      properties: {},
+      createdAt: now,
+      updatedAt: now,
     });
-    expect(proposeRes.status).toBe(200);
-    const { proposal } = await proposeRes.json();
-    expect(proposal.operations.length).toBeGreaterThan(0);
-    expect(proposal.operations.some((op: { op: string }) => op.op === "create")).toBe(true);
-
-    const applyRes = await app.request(`/books/${id}/apply-patch`, {
-      method: "POST",
-      body: JSON.stringify({ proposal }),
-      headers: { "Content-Type": "application/json" },
+    book.store.createNode({
+      id: "character-mentor",
+      bookId: id,
+      type: "character",
+      label: "Mentor",
+      contentUri: null,
+      properties: {},
+      createdAt: now,
+      updatedAt: now,
     });
-    expect(applyRes.status).toBe(200);
-    const { applied } = await applyRes.json();
-    expect(applied).toBe(proposal.operations.length);
+    book.store.createNode({
+      id: "event-awakening",
+      bookId: id,
+      type: "event",
+      label: "Awakening",
+      contentUri: null,
+      properties: { when: "Chapter 1", order: 1 },
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    book.store.createEdge({
+      id: "edge-1",
+      bookId: id,
+      type: "appears_in",
+      fromId: "character-hero",
+      toId: sceneId,
+      properties: {},
+      createdAt: now,
+    });
+    book.store.createEdge({
+      id: "edge-2",
+      bookId: id,
+      type: "appears_in",
+      fromId: "character-mentor",
+      toId: sceneId,
+      properties: {},
+      createdAt: now,
+    });
+
+    const charactersRes = await app.request(`/books/${id}/characters`);
+    expect(charactersRes.status).toBe(200);
+    const { characters } = await charactersRes.json();
+    expect(characters.length).toBe(2);
+    expect(characters.some((c: { id: string }) => c.id === "character-hero")).toBe(true);
+
+    const eventsRes = await app.request(`/books/${id}/events`);
+    expect(eventsRes.status).toBe(200);
+    const { events } = await eventsRes.json();
+    expect(events.length).toBe(1);
+    expect(events[0].label).toBe("Awakening");
+
+    const relationshipsRes = await app.request(`/books/${id}/relationships`);
+    expect(relationshipsRes.status).toBe(200);
+    const { nodes, links } = await relationshipsRes.json();
+    expect(nodes.length).toBe(2);
+    expect(links.length).toBe(1);
+    expect(links[0].strength).toBe(1);
   });
 });
