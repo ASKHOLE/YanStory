@@ -143,7 +143,7 @@ function resolveTargetChapter(book: Book, targetPath: string): number | undefine
   return undefined;
 }
 
-function resolveConditionChapter(
+export function resolveConditionChapter(
   book: Book,
   targetType: "chapter" | "event",
   targetId: string

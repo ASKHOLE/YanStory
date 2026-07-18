@@ -32,6 +32,7 @@ export {
   parseConstraint,
   checkConstraints,
   assertConstraints,
+  buildConstraintTimeline,
   ConstraintError,
   ConstraintParseError,
 } from "./constraints/index.js";
@@ -42,6 +43,10 @@ export type {
   ForbidRule,
   RequireRule,
   Violation,
+  ConstraintTimelineItem,
+  ConstraintTimelineTarget,
+  ForbidTimelineItem,
+  RequireTimelineItem,
 } from "./constraints/index.js";
 export {
   HashEmbeddingProvider,

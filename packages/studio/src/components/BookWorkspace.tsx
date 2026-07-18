@@ -3,7 +3,8 @@ import { PatchPanel } from "./PatchPanel.js";
 import { ExplorePanel } from "./ExplorePanel.js";
 import { ReaderPanel } from "./ReaderPanel.js";
 import { CritiquePanel } from "./CritiquePanel.js";
-import type { BookInfo, ConstraintItem } from "../api/client.js";
+import { ConstraintsPanel } from "./ConstraintsPanel.js";
+import type { BookInfo } from "../api/client.js";
 import { api } from "../api/client.js";
 
 interface BookWorkspaceProps {
@@ -190,66 +191,6 @@ function QueryPanel({ book, loading }: { book: BookInfo; loading: boolean }) {
         {items.map((item: { id: string; label: string }, index) => (
           <li key={item.id ?? index}>
             {item.label} <code>{item.id}</code>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ConstraintsPanel({
-  book,
-  loading,
-  run,
-  showMessage,
-}: {
-  book: BookInfo;
-  loading: boolean;
-  run: <T>(p: Promise<T>, onSuccess: (r: T) => void) => Promise<void>;
-  showMessage: (text: string) => void;
-}) {
-  const [constraints, setConstraints] = useState<ConstraintItem[]>([]);
-
-  async function load() {
-    const result = await api.listConstraints(book.id);
-    setConstraints(result.constraints);
-  }
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const data = new FormData(e.currentTarget);
-    const dsl = String(data.get("dsl") ?? "");
-    await run(api.addConstraint(book.id, dsl), () => {
-      showMessage("Constraint added");
-      void load();
-    });
-    e.currentTarget.reset();
-  }
-
-  async function remove(id: string) {
-    await run(api.removeConstraint(book.id, id), () => {
-      showMessage("Constraint removed");
-      void load();
-    });
-  }
-
-  return (
-    <div>
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <input
-          name="dsl"
-          placeholder='e.g. forbid 魔法 until chapter-0004'
-          style={{ flex: 1 }}
-          required
-        />
-        <button type="submit" disabled={loading}>Add</button>
-      </form>
-      <button onClick={load} disabled={loading} style={{ marginBottom: 16 }}>Refresh</button>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {constraints.map((c) => (
-          <li key={c.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e5e7eb" }}>
-            <span><code>{c.id}</code>: {c.dsl}</span>
-            <button onClick={() => remove(c.id)} disabled={loading}>Remove</button>
           </li>
         ))}
       </ul>

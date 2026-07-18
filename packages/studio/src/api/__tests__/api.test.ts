@@ -375,4 +375,53 @@ describe("Studio API", () => {
     const resolved = await resolveRes.json();
     expect(resolved.clue.status).toBe("resolved");
   });
+
+  it("returns constraint timeline", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Timeline API Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const book = await manager.getBook(id);
+    const now = new Date().toISOString();
+    book.store.createNode({
+      id: "chapter-0001",
+      bookId: id,
+      type: "chapter",
+      label: "Opening",
+      contentUri: null,
+      properties: { chapterNumber: 1 },
+      createdAt: now,
+      updatedAt: now,
+    });
+    book.store.createNode({
+      id: "chapter-0004",
+      bookId: id,
+      type: "chapter",
+      label: "Reveal",
+      contentUri: null,
+      properties: { chapterNumber: 4 },
+      createdAt: now,
+      updatedAt: now,
+    });
+    book.addConstraint("forbid 主角使用魔法 until chapter-0004");
+
+    const timelineRes = await app.request(`/books/${id}/constraints/timeline`);
+    expect(timelineRes.status).toBe(200);
+    const { timeline } = await timelineRes.json();
+    expect(timeline.length).toBe(1);
+    expect(timeline[0].kind).toBe("forbid");
+    expect(timeline[0].subject).toBe("主角使用魔法");
+    expect(timeline[0].target).toEqual({
+      type: "chapter",
+      id: "chapter-0004",
+      label: "Reveal",
+      chapterNumber: 4,
+    });
+    expect(timeline[0].startChapterNumber).toBe(1);
+    expect(timeline[0].endChapterNumber).toBe(4);
+  });
 });

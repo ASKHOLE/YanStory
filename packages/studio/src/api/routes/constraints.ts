@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { buildConstraintTimeline } from "@yanstory/core";
 import type { BookManager } from "../book-manager.js";
 
 export function createConstraintsRoutes(manager: BookManager) {
@@ -14,6 +15,13 @@ export function createConstraintsRoutes(manager: BookManager) {
         dsl: String(node.properties.dsl ?? ""),
       })),
     });
+  });
+
+  app.get("/:id/constraints/timeline", async (c) => {
+    const bookId = c.req.param("id");
+    const book = await manager.getBook(bookId);
+    const timeline = buildConstraintTimeline(book);
+    return c.json({ timeline });
   });
 
   app.post("/:id/constraints", async (c) => {

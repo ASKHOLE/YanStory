@@ -39,6 +39,36 @@ export interface Violation {
   message: string;
 }
 
+export interface ConstraintTimelineTarget {
+  type: "chapter" | "event";
+  id: string;
+  label: string;
+  /** Resolved chapter number for positioning on the axis. */
+  chapterNumber: number | null;
+}
+
+export interface ConstraintTimelineItemBase {
+  id: string;
+  dsl: string;
+  target?: ConstraintTimelineTarget;
+  /** First chapter where the constraint is active; null for point constraints. */
+  startChapterNumber: number | null;
+  /** Last chapter the constraint applies to; null for open-ended forbid rules. */
+  endChapterNumber: number | null;
+}
+
+export interface ForbidTimelineItem extends ConstraintTimelineItemBase {
+  kind: "forbid";
+  subject: string;
+}
+
+export interface RequireTimelineItem extends ConstraintTimelineItemBase {
+  kind: "require";
+  event: string;
+}
+
+export type ConstraintTimelineItem = ForbidTimelineItem | RequireTimelineItem;
+
 export class ConstraintParseError extends Error {
   constructor(message: string) {
     super(message);

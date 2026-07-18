@@ -51,6 +51,33 @@ export interface ConstraintItem {
   dsl: string;
 }
 
+export interface ConstraintTimelineTarget {
+  type: "chapter" | "event";
+  id: string;
+  label: string;
+  chapterNumber: number | null;
+}
+
+export type ConstraintTimelineItem =
+  | {
+      id: string;
+      dsl: string;
+      kind: "forbid";
+      subject: string;
+      target?: ConstraintTimelineTarget;
+      startChapterNumber: number | null;
+      endChapterNumber: number | null;
+    }
+  | {
+      id: string;
+      dsl: string;
+      kind: "require";
+      event: string;
+      target?: ConstraintTimelineTarget;
+      startChapterNumber: number | null;
+      endChapterNumber: number | null;
+    };
+
 export interface SearchResult {
   nodeId: string;
   type: string;
@@ -122,6 +149,9 @@ export const api = {
     fetchJson<{ markdown: string; target?: string }>(`/books/${id}/projection${target ? `/${target}` : ""}`),
 
   listConstraints: (id: string) => fetchJson<{ constraints: ConstraintItem[] }>(`/books/${id}/constraints`),
+
+  listConstraintTimeline: (id: string) =>
+    fetchJson<{ timeline: ConstraintTimelineItem[] }>(`/books/${id}/constraints/timeline`),
 
   addConstraint: (id: string, dsl: string) =>
     fetchJson<ConstraintItem>(`/books/${id}/constraints`, {

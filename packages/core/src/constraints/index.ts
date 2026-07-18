@@ -1,5 +1,6 @@
 export { parseConstraint } from "./parser.js";
 export { checkConstraints, assertConstraints } from "./engine.js";
+export { buildConstraintTimeline } from "./timeline.js";
 export {
   ConstraintError,
   ConstraintParseError,
@@ -9,4 +10,8 @@ export {
   type ForbidRule,
   type RequireRule,
   type Violation,
+  type ConstraintTimelineItem,
+  type ConstraintTimelineTarget,
+  type ForbidTimelineItem,
+  type RequireTimelineItem,
 } from "./types.js";
