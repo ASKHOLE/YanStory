@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PatchPanel } from "./PatchPanel.js";
 import { ExplorePanel } from "./ExplorePanel.js";
 import { ReaderPanel } from "./ReaderPanel.js";
+import { CritiquePanel } from "./CritiquePanel.js";
 import type { BookInfo, ConstraintItem } from "../api/client.js";
 import { api } from "../api/client.js";
 
@@ -10,7 +11,7 @@ interface BookWorkspaceProps {
   onRefresh: () => void;
 }
 
-type Tab = "compose" | "edit" | "query" | "constraints" | "snapshots" | "projection" | "patch" | "explore" | "reader";
+type Tab = "compose" | "edit" | "query" | "constraints" | "snapshots" | "projection" | "patch" | "explore" | "reader" | "critique";
 
 export function BookWorkspace({ book, onRefresh }: BookWorkspaceProps) {
   const [tab, setTab] = useState<Tab>("compose");
@@ -55,7 +56,7 @@ export function BookWorkspace({ book, onRefresh }: BookWorkspaceProps) {
       </header>
 
       <nav style={{ marginBottom: 16, display: "flex", gap: 8 }}>
-        {(["compose", "edit", "query", "constraints", "snapshots", "projection", "patch", "explore", "reader"] as Tab[]).map((t) => (
+        {(["compose", "edit", "query", "constraints", "snapshots", "projection", "patch", "explore", "reader", "critique"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -90,6 +91,7 @@ export function BookWorkspace({ book, onRefresh }: BookWorkspaceProps) {
       {tab === "patch" && <PatchPanel book={book} onRefresh={onRefresh} />}
       {tab === "explore" && <ExplorePanel book={book} />}
       {tab === "reader" && <ReaderPanel book={book} />}
+      {tab === "critique" && <CritiquePanel book={book} />}
     </main>
   );
 }
