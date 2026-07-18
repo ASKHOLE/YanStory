@@ -56,6 +56,7 @@ export type {
   SimilarityResult,
 } from "./embeddings/index.js";
 export { simulateReader } from "./operations/reader.js";
+export { critique } from "./operations/critique.js";
 export { similarNodes } from "./memory/index.js";
 export type { SimilarNodesOptions } from "./memory/index.js";
 export type {
@@ -72,4 +73,7 @@ export type {
   SimulateReaderResult,
   ReaderScores,
   ReaderHighlight,
+  CritiqueOptions,
+  CritiqueResult,
+  CritiqueScores,
 } from "./operations/types.js";
