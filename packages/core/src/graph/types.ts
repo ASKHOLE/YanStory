@@ -16,7 +16,8 @@ export type NodeType =
   | "emotion"
   | "timeline"
   | "constraint"
-  | "note";
+  | "note"
+  | "clue";
 
 export type EdgeType =
   | "contains"
@@ -31,7 +32,10 @@ export type EdgeType =
   | "appears_in"
   | "located_at"
   | "owns"
-  | "refers_to";
+  | "refers_to"
+  | "planted_in"
+  | "pays_off"
+  | "foreshadows";
 
 export interface GraphNode {
   id: string;

@@ -57,6 +57,12 @@ export type {
 } from "./embeddings/index.js";
 export { simulateReader } from "./operations/reader.js";
 export { critique } from "./operations/critique.js";
+export {
+  addClue,
+  listClues,
+  resolveClue,
+  buildClueTimeline,
+} from "./operations/clue.js";
 export { similarNodes } from "./memory/index.js";
 export type { SimilarNodesOptions } from "./memory/index.js";
 export type {
@@ -76,4 +82,9 @@ export type {
   CritiqueOptions,
   CritiqueResult,
   CritiqueScores,
+  ClueStatus,
+  AddClueOptions,
+  ResolveClueOptions,
+  ClueItem,
+  ClueTimelineItem,
 } from "./operations/types.js";

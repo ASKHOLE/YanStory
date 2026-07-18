@@ -51,6 +51,12 @@ export const PromisePropertiesSchema = BasePropertiesSchema.extend({
   status: z.enum(["active", "broken", "fulfilled"]).default("active"),
 });
 
+export const CluePropertiesSchema = BasePropertiesSchema.extend({
+  description: z.string().default(""),
+  status: z.enum(["planted", "resolved"]).default("planted"),
+  order: z.number().int().default(0),
+});
+
 export const NodePropertiesSchema = z.union([
   ChapterPropertiesSchema,
   ScenePropertiesSchema,
@@ -59,6 +65,7 @@ export const NodePropertiesSchema = z.union([
   LocationPropertiesSchema,
   EventPropertiesSchema,
   PromisePropertiesSchema,
+  CluePropertiesSchema,
   BasePropertiesSchema,
 ]);
 
@@ -70,4 +77,5 @@ export type CharacterProperties = z.infer<typeof CharacterPropertiesSchema>;
 export type LocationProperties = z.infer<typeof LocationPropertiesSchema>;
 export type EventProperties = z.infer<typeof EventPropertiesSchema>;
 export type PromiseProperties = z.infer<typeof PromisePropertiesSchema>;
+export type ClueProperties = z.infer<typeof CluePropertiesSchema>;
 export type NodeProperties = z.infer<typeof NodePropertiesSchema>;

@@ -89,6 +89,40 @@ export interface CritiqueResult {
   genreNotes: string[];
 }
 
+export type ClueStatus = "planted" | "resolved";
+
+export interface AddClueOptions {
+  label: string;
+  description?: string;
+  plantAt: string;
+  resolveAt?: string;
+  targetId?: string;
+  order?: number;
+}
+
+export interface ResolveClueOptions {
+  clueId: string;
+  resolveAt: string;
+}
+
+export interface ClueItem {
+  id: string;
+  label: string;
+  description: string;
+  status: ClueStatus;
+  plantAt: string;
+  resolveAt: string | null;
+  targetId: string | null;
+  order: number;
+  createdAt: string;
+}
+
+export interface ClueTimelineItem extends ClueItem {
+  plantLabel: string;
+  resolveLabel?: string;
+  targetLabel?: string;
+}
+
 export interface PatchProposal {
   id: string;
   description: string;
