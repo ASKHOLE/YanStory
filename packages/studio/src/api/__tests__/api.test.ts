@@ -272,4 +272,44 @@ describe("Studio API", () => {
     expect(links.length).toBe(1);
     expect(links[0].strength).toBe(1);
   });
+
+  it("runs a genre critique", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Critique API Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const book = await manager.getBook(id);
+    const stub = new LLMStub();
+    stub.when(/Respond ONLY with valid JSON/, JSON.stringify({
+      summary: "Good start.",
+      verdict: "revise",
+      scores: { pacing: 7, character: 8, worldbuilding: 6, dialogue: 7, originality: 7 },
+      strengths: ["Clear setup"],
+      weaknesses: ["Slow middle"],
+      suggestions: ["Add tension"],
+      genreNotes: ["Power system hint expected"],
+    }));
+    book.setLLMClient((options) => stub.call(options));
+
+    await app.request(`/books/${id}/compose`, {
+      method: "POST",
+      body: JSON.stringify({ intent: "introduce hero", targetWords: 100 }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const critiqueRes = await app.request(`/books/${id}/critique`, {
+      method: "POST",
+      body: JSON.stringify({ target: "chapter-0001", role: "editor" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(critiqueRes.status).toBe(200);
+    const result = await critiqueRes.json();
+    expect(result.summary).toBe("Good start.");
+    expect(result.scores.character).toBe(8);
+    expect(result.suggestions.length).toBeGreaterThan(0);
+  });
 });
