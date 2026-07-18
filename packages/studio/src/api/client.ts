@@ -1,6 +1,6 @@
-import type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult } from "@yanstory/core";
+import type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult } from "@yanstory/core";
 
-export type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult } from "@yanstory/core";
+export type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult } from "@yanstory/core";
 
 const API_BASE = "/api";
 
@@ -177,6 +177,12 @@ export const api = {
 
   simulateReader: (id: string, options?: SimulateReaderOptions) =>
     fetchJson<SimulateReaderResult>(`/books/${id}/simulate-reader`, {
+      method: "POST",
+      body: JSON.stringify(options ?? {}),
+    }),
+
+  critique: (id: string, options?: CritiqueOptions) =>
+    fetchJson<CritiqueResult>(`/books/${id}/critique`, {
       method: "POST",
       body: JSON.stringify(options ?? {}),
     }),
