@@ -1,7 +1,7 @@
 export { helloCore } from "./hello.js";
 export { Book, type CreateBookOptions } from "./models/book.js";
 export { GraphStore } from "./graph/store.js";
-export type { GraphNode, GraphEdge, NodeType, EdgeType } from "./graph/types.js";
+export type { GraphNode, GraphEdge, NodeType, EdgeType, Branch } from "./graph/types.js";
 export { AddressResolver } from "./address/resolver.js";
 export { parseAddressPath, formatAddressPath } from "./address/path.js";
 export { createLLMClient, createLLMClientFromConfig, type LLMClient } from "./llm/client.js";
@@ -93,3 +93,11 @@ export type {
   ClueItem,
   ClueTimelineItem,
 } from "./operations/types.js";
+export {
+  forkBranch,
+  listBranches,
+  getCurrentBranch,
+  checkoutBranch,
+  mergeBranches,
+} from "./operations/branch.js";
+export type { MergeProposal, MergeConflict } from "./operations/branch.js";

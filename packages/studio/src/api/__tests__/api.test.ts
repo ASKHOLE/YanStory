@@ -424,4 +424,79 @@ describe("Studio API", () => {
     expect(timeline[0].startChapterNumber).toBe(1);
     expect(timeline[0].endChapterNumber).toBe(4);
   });
+
+  it("manages branches", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Branch API Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const listRes = await app.request(`/books/${id}/branches`);
+    expect(listRes.status).toBe(200);
+    const { branches: initialBranches } = await listRes.json();
+    expect(initialBranches).toHaveLength(1);
+    expect(initialBranches[0].id).toBe("main");
+    expect(initialBranches[0].current).toBe(true);
+
+    const forkRes = await app.request(`/books/${id}/branches`, {
+      method: "POST",
+      body: JSON.stringify({ name: "feature" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(forkRes.status).toBe(200);
+    const feature = await forkRes.json();
+    expect(feature.name).toBe("feature");
+
+    const list2Res = await app.request(`/books/${id}/branches`);
+    const { branches: afterForkBranches } = await list2Res.json();
+    expect(afterForkBranches).toHaveLength(2);
+
+    const checkoutRes = await app.request(`/books/${id}/branches/${feature.id}/checkout`, { method: "POST" });
+    expect(checkoutRes.status).toBe(200);
+    const { branch: checkedOut } = await checkoutRes.json();
+    expect(checkedOut.id).toBe(feature.id);
+    expect(checkedOut.current).toBe(true);
+
+    const featureBook = await manager.getBook(id);
+    const now = new Date().toISOString();
+    featureBook.store.createNode({
+      id: "feature-note",
+      bookId: id,
+      type: "note",
+      label: "Feature note",
+      contentUri: null,
+      properties: { tag: "feature" },
+      createdAt: now,
+      updatedAt: now,
+    });
+    featureBook.store.createEdge({
+      id: "edge-feature-note",
+      bookId: id,
+      type: "contains",
+      fromId: "book",
+      toId: "feature-note",
+      properties: {},
+      createdAt: now,
+    });
+
+    const checkoutMainRes = await app.request(`/books/${id}/branches/main/checkout`, { method: "POST" });
+    expect(checkoutMainRes.status).toBe(200);
+
+    const mergeRes = await app.request(`/books/${id}/branches/${feature.id}/merge`, { method: "POST" });
+    expect(mergeRes.status).toBe(200);
+    const { proposal } = await mergeRes.json();
+    expect(proposal.sourceBranchId).toBe(feature.id);
+    expect(proposal.targetBranchId).toBe("main");
+    expect(proposal.operations).toHaveLength(1);
+    expect(proposal.operations[0]).toMatchObject({
+      op: "create",
+      path: "feature-note",
+      nodeType: "note",
+      properties: { tag: "feature" },
+    });
+    expect(proposal.conflicts).toHaveLength(0);
+  });
 });

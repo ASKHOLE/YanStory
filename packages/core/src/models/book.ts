@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { GraphStore } from "../graph/store.js";
 import { AddressResolver } from "../address/resolver.js";
 import { ensureBookLayout, getBookPaths, type BookPaths } from "../project/layout.js";
-import { type GraphNode, type NodeType } from "../graph/types.js";
+import { type GraphNode, type NodeType, type Branch } from "../graph/types.js";
 import type { LLMClient } from "../llm/client.js";
 import type { EmbeddingProvider } from "../embeddings/types.js";
 import { compose } from "../operations/compose.js";
@@ -14,6 +14,14 @@ import { buildProjection } from "../projection/markdown.js";
 import { proposePatch } from "../diff/proposal.js";
 import { applyPatch } from "../operations/patch.js";
 import { parseConstraint } from "../constraints/parser.js";
+import {
+  checkoutBranch,
+  forkBranch,
+  getCurrentBranch,
+  listBranches,
+  mergeBranches,
+} from "../operations/branch.js";
+import type { MergeProposal } from "../operations/branch.js";
 import type {
   ComposeOptions,
   ComposeResult,
@@ -146,6 +154,26 @@ export class Book {
 
   restoreSnapshot(snapshotId: string): Promise<void> {
     return restoreSnapshot(this, snapshotId);
+  }
+
+  forkBranch(name: string): Promise<Branch> {
+    return forkBranch(this, name);
+  }
+
+  listBranches(): Branch[] {
+    return listBranches(this);
+  }
+
+  getCurrentBranch(): Branch {
+    return getCurrentBranch(this);
+  }
+
+  checkoutBranch(branchId: string): Promise<Branch> {
+    return checkoutBranch(this, branchId);
+  }
+
+  mergeBranches(sourceBranchId: string): Promise<MergeProposal> {
+    return mergeBranches(this, sourceBranchId);
   }
 
   async projection(target?: string): Promise<string> {

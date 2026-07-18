@@ -16,6 +16,7 @@ export interface BookPaths {
   chaptersDir: string;
   projectionsDir: string;
   snapshotsDir: string;
+  branchesDir: string;
 }
 
 export interface ProjectPaths {
@@ -43,6 +44,7 @@ export function getBookPaths(projectRoot: string, bookId: string): BookPaths {
     chaptersDir: path.join(bookRoot, "text", "chapters"),
     projectionsDir: path.join(bookRoot, "projections"),
     snapshotsDir: path.join(bookRoot, "snapshots"),
+    branchesDir: path.join(bookRoot, "branches"),
   };
 }
 
@@ -57,6 +59,7 @@ export async function ensureBookLayout(projectRoot: string, bookId: string): Pro
   await fs.mkdir(paths.chaptersDir, { recursive: true });
   await fs.mkdir(paths.projectionsDir, { recursive: true });
   await fs.mkdir(paths.snapshotsDir, { recursive: true });
+  await fs.mkdir(paths.branchesDir, { recursive: true });
   return paths;
 }
 

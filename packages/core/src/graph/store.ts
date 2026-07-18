@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import {
+  type Branch,
   type EdgeQuery,
   type GraphEdge,
   type GraphNode,
@@ -230,6 +231,57 @@ export class GraphStore {
     return rows.map((row) => this.rowToSnapshot(row));
   }
 
+  createBranch(branch: Branch): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO branches (id, book_id, name, source_branch_id, source_snapshot_id, head_snapshot_id, current, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    stmt.run(
+      branch.id,
+      branch.bookId,
+      branch.name,
+      branch.sourceBranchId,
+      branch.sourceSnapshotId,
+      branch.headSnapshotId,
+      branch.current ? 1 : 0,
+      branch.createdAt
+    );
+  }
+
+  listBranches(bookId: string): Branch[] {
+    const stmt = this.db.prepare(
+      "SELECT * FROM branches WHERE book_id = ? ORDER BY created_at ASC"
+    );
+    const rows = stmt.all(bookId) as Record<string, unknown>[];
+    return rows.map((row) => this.rowToBranch(row));
+  }
+
+  getCurrentBranch(bookId: string): Branch | undefined {
+    const stmt = this.db.prepare(
+      "SELECT * FROM branches WHERE book_id = ? AND current = 1 LIMIT 1"
+    );
+    const row = stmt.get(bookId) as Record<string, unknown> | undefined;
+    return row ? this.rowToBranch(row) : undefined;
+  }
+
+  setBranchCurrent(bookId: string, branchId: string): void {
+    const clearStmt = this.db.prepare(
+      "UPDATE branches SET current = 0 WHERE book_id = ?"
+    );
+    clearStmt.run(bookId);
+    const setStmt = this.db.prepare(
+      "UPDATE branches SET current = 1 WHERE book_id = ? AND id = ?"
+    );
+    setStmt.run(bookId, branchId);
+  }
+
+  updateBranchHead(bookId: string, branchId: string, snapshotId: string): void {
+    const stmt = this.db.prepare(
+      "UPDATE branches SET head_snapshot_id = ? WHERE book_id = ? AND id = ?"
+    );
+    stmt.run(snapshotId, bookId, branchId);
+  }
+
   transaction<T>(callback: () => T): T {
     const tx = this.db.transaction(callback);
     return tx();
@@ -279,6 +331,19 @@ export class GraphStore {
       bookId: String(row.book_id),
       name: String(row.name),
       graphHash: row.graph_hash === null ? null : String(row.graph_hash),
+      createdAt: String(row.created_at),
+    };
+  }
+
+  private rowToBranch(row: Record<string, unknown>): Branch {
+    return {
+      id: String(row.id),
+      bookId: String(row.book_id),
+      name: String(row.name),
+      sourceBranchId: row.source_branch_id === null ? null : String(row.source_branch_id),
+      sourceSnapshotId: row.source_snapshot_id === null ? null : String(row.source_snapshot_id),
+      headSnapshotId: row.head_snapshot_id === null ? null : String(row.head_snapshot_id),
+      current: Number(row.current) === 1,
       createdAt: String(row.created_at),
     };
   }

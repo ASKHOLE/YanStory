@@ -15,6 +15,8 @@ import {
   type LLMClient,
   type EmbeddingProvider,
   type ResolvedEmbeddingConfig,
+  type Branch,
+  type MergeProposal,
 } from "@yanstory/core";
 
 export interface BookManagerOptions {
@@ -95,6 +97,24 @@ export class BookManager {
       book.close();
     }
     this.openBooks.clear();
+  }
+
+  async forkBranch(bookId: string, name: string): Promise<Branch> {
+    const book = await this.getBook(bookId);
+    return book.forkBranch(name);
+  }
+
+  async checkoutBranch(bookId: string, branchId: string): Promise<Branch> {
+    const book = await this.getBook(bookId);
+    await book.checkoutBranch(branchId);
+    this.closeBook(bookId);
+    const reopened = await this.openBook(bookId);
+    return reopened.getCurrentBranch();
+  }
+
+  async mergeBranches(bookId: string, sourceBranchId: string): Promise<MergeProposal> {
+    const book = await this.getBook(bookId);
+    return book.mergeBranches(sourceBranchId);
   }
 
   private attachClient(book: Book): void {

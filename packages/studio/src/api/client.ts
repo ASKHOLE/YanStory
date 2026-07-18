@@ -1,6 +1,6 @@
-import type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult, ClueItem, ClueTimelineItem } from "@yanstory/core";
+import type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult, ClueItem, ClueTimelineItem, Branch, MergeProposal } from "@yanstory/core";
 
-export type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult, ClueItem, ClueTimelineItem } from "@yanstory/core";
+export type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult, ClueItem, ClueTimelineItem, Branch, MergeProposal } from "@yanstory/core";
 
 const API_BASE = "/api";
 
@@ -239,5 +239,23 @@ export const api = {
     fetchJson<{ clue: ClueItem }>(`/books/${id}/clues/${clueId}/resolve`, {
       method: "POST",
       body: JSON.stringify({ resolveAt }),
+    }),
+
+  listBranches: (id: string) => fetchJson<{ branches: Branch[] }>(`/books/${id}/branches`),
+
+  forkBranch: (id: string, name: string) =>
+    fetchJson<Branch>(`/books/${id}/branches`, {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+
+  checkoutBranch: (id: string, branchId: string) =>
+    fetchJson<{ branch: Branch }>(`/books/${id}/branches/${branchId}/checkout`, {
+      method: "POST",
+    }),
+
+  mergeBranches: (id: string, sourceBranchId: string) =>
+    fetchJson<{ proposal: MergeProposal }>(`/books/${id}/branches/${sourceBranchId}/merge`, {
+      method: "POST",
     }),
 };

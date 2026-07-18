@@ -77,6 +77,17 @@ export interface Snapshot {
   createdAt: string;
 }
 
+export interface Branch {
+  id: string;
+  bookId: string;
+  name: string;
+  sourceBranchId: string | null;
+  sourceSnapshotId: string | null;
+  headSnapshotId: string | null;
+  current: boolean;
+  createdAt: string;
+}
+
 export interface NodeQuery {
   bookId: string;
   type?: NodeType | NodeType[];

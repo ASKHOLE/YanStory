@@ -54,6 +54,20 @@ CREATE TABLE IF NOT EXISTS snapshots (
   PRIMARY KEY (book_id, id)
 );
 
+CREATE TABLE IF NOT EXISTS branches (
+  id TEXT NOT NULL,
+  book_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  source_branch_id TEXT,
+  source_snapshot_id TEXT,
+  head_snapshot_id TEXT,
+  current INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (book_id, id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_branches_current ON branches(book_id, current);
+
 CREATE TABLE IF NOT EXISTS embeddings (
   id TEXT NOT NULL,
   book_id TEXT NOT NULL,
