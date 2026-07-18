@@ -140,6 +140,44 @@ describe("Studio API", () => {
     expect(results[0]).toHaveProperty("score");
   });
 
+  it("simulates a reader", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Reader API Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const book = await manager.getBook(id);
+    const stub = new LLMStub();
+    stub.when(/Respond ONLY with valid JSON/, JSON.stringify({
+      summary: "Clear and engaging.",
+      scores: { comprehension: 8, engagement: 9, consistency: 7, suspense: 6 },
+      highlights: [{ type: "engaging", reason: "Strong opening" }],
+      questions: ["What happens next?"],
+      predictions: ["The hero will train."],
+    }));
+    book.setLLMClient((options) => stub.call(options));
+
+    await app.request(`/books/${id}/compose`, {
+      method: "POST",
+      body: JSON.stringify({ intent: "introduce hero", targetWords: 100 }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const readerRes = await app.request(`/books/${id}/simulate-reader`, {
+      method: "POST",
+      body: JSON.stringify({ target: "chapter-0001" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(readerRes.status).toBe(200);
+    const result = await readerRes.json();
+    expect(result.summary).toBe("Clear and engaging.");
+    expect(result.scores.engagement).toBe(9);
+    expect(result.highlights.length).toBeGreaterThan(0);
+  });
+
   it("lists characters, events, and relationships", async () => {
     const app = createApp();
     const createRes = await app.request("/books", {
