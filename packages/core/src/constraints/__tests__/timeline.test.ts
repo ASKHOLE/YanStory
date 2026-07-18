@@ -114,13 +114,18 @@ describe("buildConstraintTimeline", () => {
     expect(timeline[0].target).toBeUndefined();
   });
 
-  it("handles missing target by omitting target", () => {
+  it("handles missing target chapter by using id as label", () => {
     createChapter(book, "chapter-0001", "Opening", 1);
     book.addConstraint("forbid 魔法 until chapter-9999");
 
     const timeline = buildConstraintTimeline(book);
 
-    expect(timeline[0].target).toBeUndefined();
-    expect(timeline[0].endChapterNumber).toBeNull();
+    expect(timeline[0].target).toEqual({
+      type: "chapter",
+      id: "chapter-9999",
+      label: "chapter-9999",
+      chapterNumber: 9999,
+    });
+    expect(timeline[0].endChapterNumber).toBe(9999);
   });
 });

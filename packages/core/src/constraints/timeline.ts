@@ -21,8 +21,7 @@ function resolveTarget(
   if (targetType === "chapter") {
     const id = targetId.startsWith("chapter-") ? targetId : `chapter-${targetId}`;
     const node = book.store.getNode(book.id, id);
-    if (!node) return undefined;
-    return { type: "chapter", id, label: node.label, chapterNumber };
+    return { type: "chapter", id, label: node?.label ?? id, chapterNumber };
   }
 
   const node = book.store.getNode(book.id, targetId);
