@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import type { BookInfo, SearchResult, CharacterItem, EventItem, RelationshipNode, RelationshipLink } from "../api/client.js";
 import { api } from "../api/client.js";
+import { CluesPanel } from "./CluesPanel.js";
 
-type ExploreTab = "search" | "characters" | "events" | "relationships";
+type ExploreTab = "search" | "characters" | "events" | "relationships" | "clues";
 
 interface ExplorePanelProps {
   book: BookInfo;
@@ -18,7 +19,7 @@ export function ExplorePanel({ book }: ExplorePanelProps) {
       {error && <div style={{ padding: 12, background: "#fee2e2", borderRadius: 4, marginBottom: 16 }}>{error}</div>}
 
       <nav style={{ marginBottom: 16, display: "flex", gap: 8 }}>
-        {(["search", "characters", "events", "relationships"] as ExploreTab[]).map((t) => (
+        {(["search", "characters", "events", "relationships", "clues"] as ExploreTab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -41,6 +42,7 @@ export function ExplorePanel({ book }: ExplorePanelProps) {
       {tab === "characters" && <CharactersPanel book={book} setLoading={setLoading} setError={setError} loading={loading} />}
       {tab === "events" && <EventsPanel book={book} setLoading={setLoading} setError={setError} loading={loading} />}
       {tab === "relationships" && <RelationshipsPanel book={book} setLoading={setLoading} setError={setError} loading={loading} />}
+      {tab === "clues" && <CluesPanel book={book} setLoading={setLoading} setError={setError} loading={loading} />}
     </div>
   );
 }

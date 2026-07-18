@@ -312,4 +312,67 @@ describe("Studio API", () => {
     expect(result.scores.character).toBe(8);
     expect(result.suggestions.length).toBeGreaterThan(0);
   });
+
+  it("manages clues", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Clue API Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const book = await manager.getBook(id);
+    const now = new Date().toISOString();
+    book.store.createNode({
+      id: "event-1",
+      bookId: id,
+      type: "event",
+      label: "Awakening",
+      contentUri: null,
+      properties: { order: 1 },
+      createdAt: now,
+      updatedAt: now,
+    });
+    book.store.createNode({
+      id: "event-2",
+      bookId: id,
+      type: "event",
+      label: "Revelation",
+      contentUri: null,
+      properties: { order: 5 },
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const addRes = await app.request(`/books/${id}/clues`, {
+      method: "POST",
+      body: JSON.stringify({
+        label: "Hidden letter",
+        description: "Under the floorboard",
+        plantAt: "event-1",
+        targetId: "event-2",
+        order: 2,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(addRes.status).toBe(200);
+    const added = await addRes.json();
+    expect(added.clue.status).toBe("planted");
+
+    const listRes = await app.request(`/books/${id}/clues`);
+    expect(listRes.status).toBe(200);
+    const { clues } = await listRes.json();
+    expect(clues.length).toBe(1);
+    expect(clues[0].plantLabel).toBe("Awakening");
+
+    const resolveRes = await app.request(`/books/${id}/clues/${added.clue.id}/resolve`, {
+      method: "POST",
+      body: JSON.stringify({ resolveAt: "event-2" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(resolveRes.status).toBe(200);
+    const resolved = await resolveRes.json();
+    expect(resolved.clue.status).toBe("resolved");
+  });
 });

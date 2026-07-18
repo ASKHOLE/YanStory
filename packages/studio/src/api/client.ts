@@ -1,6 +1,6 @@
-import type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult } from "@yanstory/core";
+import type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult, ClueItem, ClueTimelineItem } from "@yanstory/core";
 
-export type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult } from "@yanstory/core";
+export type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult, CritiqueOptions, CritiqueResult, ClueItem, ClueTimelineItem } from "@yanstory/core";
 
 const API_BASE = "/api";
 
@@ -185,5 +185,29 @@ export const api = {
     fetchJson<CritiqueResult>(`/books/${id}/critique`, {
       method: "POST",
       body: JSON.stringify(options ?? {}),
+    }),
+
+  listClues: (id: string) => fetchJson<{ clues: ClueTimelineItem[] }>(`/books/${id}/clues`),
+
+  addClue: (
+    id: string,
+    payload: {
+      label: string;
+      description?: string;
+      plantAt: string;
+      resolveAt?: string;
+      targetId?: string;
+      order?: number;
+    }
+  ) =>
+    fetchJson<{ clue: ClueItem }>(`/books/${id}/clues`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  resolveClue: (id: string, clueId: string, resolveAt: string) =>
+    fetchJson<{ clue: ClueItem }>(`/books/${id}/clues/${clueId}/resolve`, {
+      method: "POST",
+      body: JSON.stringify({ resolveAt }),
     }),
 };

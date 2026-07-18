@@ -114,4 +114,34 @@ describe("ExplorePanel", () => {
     expect(screen.getByText(/Mentor/)).toBeInTheDocument();
     expect(screen.getByText(/—2 shared scenes—/)).toBeInTheDocument();
   });
+
+  it("switches to clues tab and loads clues", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        clues: [
+          {
+            id: "clue-1",
+            label: "Hidden letter",
+            description: "Under the floorboard",
+            status: "planted",
+            plantAt: "event-1",
+            plantLabel: "Awakening",
+            resolveAt: null,
+            targetId: null,
+            targetLabel: undefined,
+            order: 1,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+
+    render(<ExplorePanel book={sampleBook} />);
+    fireEvent.click(screen.getByRole("button", { name: "clues" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Hidden letter")).toBeInTheDocument();
+    });
+    expect(screen.getByText((content) => content.includes("Planted in: Awakening"))).toBeInTheDocument();
+  });
 });
