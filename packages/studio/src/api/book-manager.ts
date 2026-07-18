@@ -8,9 +8,12 @@ import {
   createLLMClient,
   loadSecrets,
   resolveLLMConfig,
+  resolveEmbeddingConfig,
+  createEmbeddingProvider,
   createHashEmbeddingProvider,
   type LLMClient,
   type EmbeddingProvider,
+  type ResolvedEmbeddingConfig,
 } from "@yanstory/core";
 
 export interface BookManagerOptions {
@@ -22,20 +25,28 @@ export interface BookManagerOptions {
 export class BookManager {
   private readonly projectRoot: string;
   private readonly useStub: boolean;
+  private readonly embeddingProviderExternal: boolean;
   private readonly openBooks = new Map<string, Book>();
   private llmClient: LLMClient | undefined;
   private embeddingProvider: EmbeddingProvider;
+  private embeddingConfig: ResolvedEmbeddingConfig;
 
   constructor(options: BookManagerOptions) {
     this.projectRoot = path.resolve(options.projectRoot);
     this.useStub = options.useStub ?? false;
+    this.embeddingProviderExternal = options.embeddingProvider !== undefined;
     this.embeddingProvider = options.embeddingProvider ?? createHashEmbeddingProvider();
+    this.embeddingConfig = resolveEmbeddingConfig({});
   }
 
   async initialize(): Promise<void> {
     await ensureProjectLayout(this.projectRoot);
+    const secrets = await loadSecrets(this.projectRoot);
+    this.embeddingConfig = resolveEmbeddingConfig(secrets);
+    if (!this.embeddingProviderExternal) {
+      this.embeddingProvider = createEmbeddingProvider(this.embeddingConfig);
+    }
     if (!this.useStub) {
-      const secrets = await loadSecrets(this.projectRoot);
       const config = resolveLLMConfig(secrets);
       this.llmClient = createLLMClient(config);
     }

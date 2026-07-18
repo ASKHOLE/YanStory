@@ -3,7 +3,7 @@ import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
 import { createApiApp, BookManager } from "../index.js";
-import { createLLMStub, LLMStub } from "@yanstory/core";
+import { createLLMStub, LLMStub, createHashEmbeddingProvider } from "@yanstory/core";
 
 async function createTempDir(): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), "yanstory-studio-api-test-"));
@@ -15,7 +15,11 @@ describe("Studio API", () => {
 
   beforeEach(async () => {
     projectRoot = await createTempDir();
-    manager = new BookManager({ projectRoot, useStub: true });
+    manager = new BookManager({
+      projectRoot,
+      useStub: true,
+      embeddingProvider: createHashEmbeddingProvider(),
+    });
     await manager.initialize();
   });
 

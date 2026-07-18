@@ -10,8 +10,15 @@ export {
   loadSecrets,
   saveSecrets,
   resolveLLMConfig,
+  resolveEmbeddingConfig,
   getDisplayConfig,
   setConfigValue,
+} from "./project/config.js";
+export type {
+  LLMConfig,
+  EmbeddingConfig,
+  ResolvedLLMConfig,
+  ResolvedEmbeddingConfig,
 } from "./project/config.js";
 export {
   ensureProjectLayout,
@@ -39,6 +46,7 @@ export type {
 export {
   HashEmbeddingProvider,
   createHashEmbeddingProvider,
+  createEmbeddingProvider,
   EmbeddingStore,
 } from "./embeddings/index.js";
 export type {
