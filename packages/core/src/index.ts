@@ -55,6 +55,7 @@ export type {
   SimilarityQuery,
   SimilarityResult,
 } from "./embeddings/index.js";
+export { simulateReader } from "./operations/reader.js";
 export { similarNodes } from "./memory/index.js";
 export type { SimilarNodesOptions } from "./memory/index.js";
 export type {
@@ -67,4 +68,8 @@ export type {
   PatchProposal,
   PatchOperation,
   ApplyPatchResult,
+  SimulateReaderOptions,
+  SimulateReaderResult,
+  ReaderScores,
+  ReaderHighlight,
 } from "./operations/types.js";
