@@ -6,6 +6,7 @@ import {
   loadSecrets,
   saveSecrets,
   resolveLLMConfig,
+  resolveEmbeddingConfig,
   setConfigValue,
   getDisplayConfig,
 } from "../config.js";
@@ -75,5 +76,26 @@ describe("config", () => {
   it("shows not set when api key is empty", async () => {
     const config = await getDisplayConfig(projectRoot);
     expect(config.apiKey).toBe("(not set)");
+  });
+
+  it("resolves embedding config with defaults", () => {
+    const config = resolveEmbeddingConfig({});
+    expect(config.provider).toBe("fastembed");
+    expect(config.model).toBe("bge-small-zh");
+    expect(config.dimension).toBe(384);
+  });
+
+  it("resolves embedding config from secrets", () => {
+    const config = resolveEmbeddingConfig({ embedding: { provider: "hash" } });
+    expect(config.provider).toBe("hash");
+    expect(config.model).toBe("bge-small-zh");
+  });
+
+  it("resolves embedding config from env", () => {
+    const env = { YANSTORY_EMBEDDING_PROVIDER: "hash", YANSTORY_EMBEDDING_MODEL: "all-MiniLM-L6-v2", YANSTORY_EMBEDDING_DIMENSION: "256" };
+    const config = resolveEmbeddingConfig({}, env);
+    expect(config.provider).toBe("hash");
+    expect(config.model).toBe("all-MiniLM-L6-v2");
+    expect(config.dimension).toBe(256);
   });
 });

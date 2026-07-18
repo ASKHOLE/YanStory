@@ -8,17 +8,33 @@ export const LLMConfigSchema = z.object({
   model: z.string().optional(),
 });
 
+export const EmbeddingConfigSchema = z.object({
+  provider: z.enum(["fastembed", "hash"]).optional(),
+  model: z.string().optional(),
+  dimension: z.number().int().positive().optional(),
+  cacheDir: z.string().optional(),
+});
+
 export const SecretsSchema = z.object({
   llm: LLMConfigSchema.optional(),
+  embedding: EmbeddingConfigSchema.optional(),
 });
 
 export type Secrets = z.infer<typeof SecretsSchema>;
 export type LLMConfig = z.infer<typeof LLMConfigSchema>;
+export type EmbeddingConfig = z.infer<typeof EmbeddingConfigSchema>;
 
 export interface ResolvedLLMConfig {
   apiKey: string;
   baseUrl: string;
   model: string;
+}
+
+export interface ResolvedEmbeddingConfig {
+  provider: "fastembed" | "hash";
+  model: string;
+  dimension: number;
+  cacheDir?: string;
 }
 
 export async function loadSecrets(projectRoot: string): Promise<Secrets> {
@@ -85,5 +101,20 @@ export function resolveLLMConfig(secrets: Secrets, env: NodeJS.ProcessEnv = proc
     apiKey: env.YANSTORY_LLM_API_KEY ?? secrets.llm?.apiKey ?? "",
     baseUrl: env.YANSTORY_LLM_BASE_URL ?? secrets.llm?.baseUrl ?? "https://api.openai.com/v1",
     model: env.YANSTORY_LLM_MODEL ?? secrets.llm?.model ?? "gpt-4o-mini",
+  };
+}
+
+export function resolveEmbeddingConfig(
+  secrets: Secrets,
+  env: NodeJS.ProcessEnv = process.env
+): ResolvedEmbeddingConfig {
+  const embedding = secrets.embedding;
+  return {
+    provider: (env.YANSTORY_EMBEDDING_PROVIDER ?? embedding?.provider ?? "fastembed") as "fastembed" | "hash",
+    model: env.YANSTORY_EMBEDDING_MODEL ?? embedding?.model ?? "bge-small-zh",
+    dimension: env.YANSTORY_EMBEDDING_DIMENSION
+      ? Number(env.YANSTORY_EMBEDDING_DIMENSION)
+      : (embedding?.dimension ?? 384),
+    cacheDir: embedding?.cacheDir,
   };
 }
