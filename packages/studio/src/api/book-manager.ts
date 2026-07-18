@@ -6,6 +6,7 @@ import {
   listBooks,
   bookExists,
   createLLMClient,
+  createLLMStub,
   loadSecrets,
   resolveLLMConfig,
   resolveEmbeddingConfig,
@@ -99,7 +100,7 @@ export class BookManager {
   private attachClient(book: Book): void {
     book.setEmbeddingProvider(this.embeddingProvider);
     if (this.useStub) {
-      // Stub LLM is provided per-request in tests; do not attach globally.
+      book.setLLMClient(createLLMStub());
       return;
     }
     if (this.llmClient) {
