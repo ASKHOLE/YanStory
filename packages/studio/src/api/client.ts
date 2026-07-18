@@ -1,6 +1,6 @@
-import type { PatchProposal, ApplyPatchResult } from "@yanstory/core";
+import type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult } from "@yanstory/core";
 
-export type { PatchProposal, ApplyPatchResult } from "@yanstory/core";
+export type { PatchProposal, ApplyPatchResult, SimulateReaderOptions, SimulateReaderResult } from "@yanstory/core";
 
 const API_BASE = "/api";
 
@@ -174,4 +174,10 @@ export const api = {
 
   listRelationships: (id: string) =>
     fetchJson<{ nodes: RelationshipNode[]; links: RelationshipLink[] }>(`/books/${id}/relationships`),
+
+  simulateReader: (id: string, options?: SimulateReaderOptions) =>
+    fetchJson<SimulateReaderResult>(`/books/${id}/simulate-reader`, {
+      method: "POST",
+      body: JSON.stringify(options ?? {}),
+    }),
 };
