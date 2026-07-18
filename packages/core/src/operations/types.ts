@@ -38,6 +38,33 @@ export interface QueryResult {
   items: GraphNode[];
 }
 
+export interface ReaderHighlight {
+  type: "confusing" | "engaging" | "boring" | "inconsistent" | "memorable";
+  quote?: string;
+  reason: string;
+}
+
+export interface ReaderScores {
+  comprehension: number;
+  engagement: number;
+  consistency: number;
+  suspense: number;
+}
+
+export interface SimulateReaderOptions {
+  target?: string;
+  perspective?: string;
+  focus?: string[];
+}
+
+export interface SimulateReaderResult {
+  summary: string;
+  scores: ReaderScores;
+  highlights: ReaderHighlight[];
+  questions: string[];
+  predictions: string[];
+}
+
 export interface PatchProposal {
   id: string;
   description: string;
