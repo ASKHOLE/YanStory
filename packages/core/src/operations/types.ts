@@ -65,6 +65,30 @@ export interface SimulateReaderResult {
   predictions: string[];
 }
 
+export interface CritiqueScores {
+  pacing: number;
+  character: number;
+  worldbuilding: number;
+  dialogue: number;
+  originality: number;
+}
+
+export interface CritiqueOptions {
+  target?: string;
+  role?: string;
+  focus?: string[];
+}
+
+export interface CritiqueResult {
+  summary: string;
+  verdict: "pass" | "revise" | "major-revision";
+  scores: CritiqueScores;
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: string[];
+  genreNotes: string[];
+}
+
 export interface PatchProposal {
   id: string;
   description: string;
