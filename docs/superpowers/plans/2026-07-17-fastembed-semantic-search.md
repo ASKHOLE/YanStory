@@ -1,6 +1,6 @@
 # FastEmbed 真实语义检索接入计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **状态：已实现** — 所有步骤已核对并完成。
 
 **Goal:** 让 YanStory 默认使用 FastEmbed 真实语义模型进行检索，同时保留 HashEmbeddingProvider 作为离线/测试回退，支持通过环境变量或 `.yanstory/secrets.json` 配置模型。
 
@@ -30,7 +30,7 @@
 - Modify: `packages/core/src/project/config.ts`
 - Test: `packages/core/src/project/__tests__/config.test.ts`
 
-- [ ] **Step 1: 编写失败测试**
+- [x] **Step 1: 编写失败测试**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -58,12 +58,12 @@ describe("resolveEmbeddingConfig", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `pnpm --filter @yanstory/core test -- src/project/__tests__/config.test.ts`
 Expected: FAIL - `resolveEmbeddingConfig` not defined
 
-- [ ] **Step 3: 实现配置解析**
+- [x] **Step 3: 实现配置解析**
 
 在 `packages/core/src/project/config.ts` 中：
 
@@ -107,12 +107,12 @@ export const SecretsSchema = z.object({
 });
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `pnpm --filter @yanstory/core test -- src/project/__tests__/config.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add packages/core/src/project/config.ts packages/core/src/project/__tests__/config.test.ts
@@ -128,7 +128,7 @@ git commit -m "feat: add embedding config resolution"
 - Modify: `packages/core/src/embeddings/index.ts`
 - Test: `packages/core/src/embeddings/__tests__/factory.test.ts`
 
-- [ ] **Step 1: 编写失败测试**
+- [x] **Step 1: 编写失败测试**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -148,12 +148,12 @@ describe("createEmbeddingProvider", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `pnpm --filter @yanstory/core test -- src/embeddings/__tests__/factory.test.ts`
 Expected: FAIL - `factory.js` not found
 
-- [ ] **Step 3: 实现 factory**
+- [x] **Step 3: 实现 factory**
 
 创建 `packages/core/src/embeddings/factory.ts`：
 
@@ -216,7 +216,7 @@ export function createEmbeddingProvider(config: ResolvedEmbeddingConfig): Embedd
 }
 ```
 
-- [ ] **Step 4: 更新导出**
+- [x] **Step 4: 更新导出**
 
 在 `packages/core/src/embeddings/index.ts` 中：
 
@@ -224,12 +224,12 @@ export function createEmbeddingProvider(config: ResolvedEmbeddingConfig): Embedd
 export { createEmbeddingProvider } from "./factory.js";
 ```
 
-- [ ] **Step 5: 运行测试确认通过**
+- [x] **Step 5: 运行测试确认通过**
 
 Run: `pnpm --filter @yanstory/core test -- src/embeddings/__tests__/factory.test.ts`
 Expected: PASS
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add packages/core/src/embeddings/factory.ts packages/core/src/embeddings/index.ts packages/core/src/embeddings/__tests__/factory.test.ts
@@ -244,7 +244,7 @@ git commit -m "feat: add embedding provider factory"
 - Modify: `packages/studio/src/api/book-manager.ts`
 - Modify: `packages/core/src/index.ts`
 
-- [ ] **Step 1: 修改 BookManager**
+- [x] **Step 1: 修改 BookManager**
 
 在 `packages/studio/src/api/book-manager.ts` 中：
 
@@ -294,7 +294,7 @@ export class BookManager {
 
 注意：如果构造函数已传入 provider（如测试传入 HashEmbeddingProvider），则 initialize 不再覆盖。
 
-- [ ] **Step 2: 导出新增类型/函数**
+- [x] **Step 2: 导出新增类型/函数**
 
 在 `packages/core/src/index.ts` 中：
 
@@ -303,12 +303,12 @@ export { resolveEmbeddingConfig, createEmbeddingProvider } from "./project/confi
 export type { ResolvedEmbeddingConfig, EmbeddingConfig } from "./project/config.js";
 ```
 
-- [ ] **Step 3: 运行 Studio 测试**
+- [x] **Step 3: 运行 Studio 测试**
 
 Run: `pnpm --filter @yanstory/studio test -- src/api/__tests__/api.test.ts`
 Expected: PASS（测试未显式传 provider，仍会使用 hash 作为构造函数默认值）
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add packages/studio/src/api/book-manager.ts packages/core/src/index.ts
@@ -322,7 +322,7 @@ git commit -m "feat: BookManager resolves embedding provider from config"
 **Files:**
 - Modify: `packages/studio/src/api/__tests__/api.test.ts`
 
-- [ ] **Step 1: 修改测试初始化**
+- [x] **Step 1: 修改测试初始化**
 
 ```ts
 import { ..., createHashEmbeddingProvider } from "@yanstory/core";
@@ -338,12 +338,12 @@ beforeEach(async () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试**
+- [x] **Step 2: 运行测试**
 
 Run: `pnpm --filter @yanstory/studio test -- src/api/__tests__/api.test.ts`
 Expected: PASS
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add packages/studio/src/api/__tests__/api.test.ts
@@ -354,7 +354,7 @@ git commit -m "test: use hash embedding provider in API tests to avoid model dow
 
 ### Task 5: 验证与最终提交
 
-- [ ] **Step 1: 全量构建与测试**
+- [x] **Step 1: 全量构建与测试**
 
 Run:
 ```bash
@@ -364,7 +364,7 @@ pnpm test
 ```
 Expected: 全部通过
 
-- [ ] **Step 2: 检查工作区**
+- [x] **Step 2: 检查工作区**
 
 Run:
 ```bash
@@ -373,7 +373,7 @@ git diff --stat
 ```
 Expected: 干净，无意外文件
 
-- [ ] **Step 3: 提交（如尚未提交）并推送**
+- [x] **Step 3: 提交（如尚未提交）并推送**
 
 ```bash
 git push origin main

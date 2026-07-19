@@ -1,6 +1,6 @@
 # 读者模拟器代理实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **状态：已实现** — 所有步骤已核对并完成。
 
 **Goal:** 让 YanStory 能以“读者”身份阅读章节并返回结构化反馈（理解度、情绪、悬念、一致性、疑问），帮助作者发现叙事盲点。
 
@@ -33,7 +33,7 @@
 **Files:**
 - Modify: `packages/core/src/operations/types.ts`
 
-- [ ] **Step 1: 添加类型**
+- [x] **Step 1: 添加类型**
 
 ```ts
 export interface SimulateReaderOptions {
@@ -64,7 +64,7 @@ export interface SimulateReaderResult {
 }
 ```
 
-- [ ] **Step 2: 提交**
+- [x] **Step 2: 提交**
 
 ```bash
 git add packages/core/src/operations/types.ts
@@ -80,7 +80,7 @@ git commit -m "feat: add reader simulator operation types"
 - Modify: `packages/core/src/index.ts`
 - Test: `packages/core/src/operations/__tests__/reader.test.ts`
 
-- [ ] **Step 1: 编写失败测试**
+- [x] **Step 1: 编写失败测试**
 
 ```ts
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
@@ -119,12 +119,12 @@ describe("simulateReader", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `pnpm --filter @yanstory/core test -- src/operations/__tests__/reader.test.ts`
 Expected: FAIL - `reader.js` not found
 
-- [ ] **Step 3: 实现操作**
+- [x] **Step 3: 实现操作**
 
 创建 `packages/core/src/operations/reader.ts`：
 
@@ -196,7 +196,7 @@ export async function simulateReader(
 }
 ```
 
-- [ ] **Step 4: 导出操作**
+- [x] **Step 4: 导出操作**
 
 在 `packages/core/src/index.ts` 中：
 
@@ -210,12 +210,12 @@ export type {
 } from "./operations/types.js";
 ```
 
-- [ ] **Step 5: 运行测试确认通过**
+- [x] **Step 5: 运行测试确认通过**
 
 Run: `pnpm --filter @yanstory/core test -- src/operations/__tests__/reader.test.ts`
 Expected: PASS
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add packages/core/src/operations/reader.ts packages/core/src/operations/__tests__/reader.test.ts packages/core/src/index.ts packages/core/src/operations/types.ts
@@ -231,7 +231,7 @@ git commit -m "feat: implement simulateReader operation"
 - Modify: `packages/studio/src/api/index.ts`
 - Modify: `packages/studio/src/api/client.ts`
 
-- [ ] **Step 1: 创建路由**
+- [x] **Step 1: 创建路由**
 
 创建 `packages/studio/src/api/routes/reader.ts`：
 
@@ -258,7 +258,7 @@ export function createReaderRoutes(manager: BookManager) {
 }
 ```
 
-- [ ] **Step 2: 挂载路由**
+- [x] **Step 2: 挂载路由**
 
 在 `packages/studio/src/api/index.ts` 中导入并挂载：
 
@@ -267,7 +267,7 @@ import { createReaderRoutes } from "./routes/reader.js";
 app.route("/books", createReaderRoutes(manager));
 ```
 
-- [ ] **Step 3: 扩展 client**
+- [x] **Step 3: 扩展 client**
 
 在 `packages/studio/src/api/client.ts` 中：
 
@@ -281,7 +281,7 @@ simulateReader: (id: string, options?: SimulateReaderOptions) =>
   }),
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add packages/studio/src/api/routes/reader.ts packages/studio/src/api/index.ts packages/studio/src/api/client.ts
@@ -297,7 +297,7 @@ git commit -m "feat: add reader simulator API route and client"
 - Modify: `packages/studio/src/components/BookWorkspace.tsx`
 - Test: `packages/studio/src/components/__tests__/ReaderPanel.test.tsx`
 
-- [ ] **Step 1: 创建组件**
+- [x] **Step 1: 创建组件**
 
 创建 `packages/studio/src/components/ReaderPanel.tsx`：
 
@@ -420,7 +420,7 @@ export function ReaderPanel({ book }: ReaderPanelProps) {
 }
 ```
 
-- [ ] **Step 2: 更新 BookWorkspace**
+- [x] **Step 2: 更新 BookWorkspace**
 
 在 `BookWorkspace.tsx` 中：
 
@@ -435,7 +435,7 @@ type Tab = "compose" | ... | "reader";
 {tab === "reader" && <ReaderPanel book={book} />}
 ```
 
-- [ ] **Step 3: 组件测试**
+- [x] **Step 3: 组件测试**
 
 创建 `packages/studio/src/components/__tests__/ReaderPanel.test.tsx`：
 
@@ -499,7 +499,7 @@ describe("ReaderPanel", () => {
 });
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add packages/studio/src/components/ReaderPanel.tsx packages/studio/src/components/BookWorkspace.tsx packages/studio/src/components/__tests__/ReaderPanel.test.tsx
@@ -513,7 +513,7 @@ git commit -m "feat: add ReaderPanel component and workspace tab"
 **Files:**
 - Modify: `packages/studio/src/api/__tests__/api.test.ts`
 
-- [ ] **Step 1: 添加测试**
+- [x] **Step 1: 添加测试**
 
 ```ts
 it("simulates a reader", async () => {
@@ -546,12 +546,12 @@ it("simulates a reader", async () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试确认通过**
+- [x] **Step 2: 运行测试确认通过**
 
 Run: `pnpm --filter @yanstory/studio test -- src/api/__tests__/api.test.ts`
 Expected: PASS
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add packages/studio/src/api/__tests__/api.test.ts
@@ -562,7 +562,7 @@ git commit -m "test: add reader simulator API integration test"
 
 ### Task 6: 全量验证与推送
 
-- [ ] **Step 1: 全量构建与测试**
+- [x] **Step 1: 全量构建与测试**
 
 Run:
 ```bash
@@ -572,7 +572,7 @@ pnpm test
 ```
 Expected: 全部通过
 
-- [ ] **Step 2: 推送**
+- [x] **Step 2: 推送**
 
 ```bash
 git push origin main

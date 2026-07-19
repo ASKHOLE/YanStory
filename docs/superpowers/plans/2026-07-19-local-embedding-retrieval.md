@@ -1,6 +1,6 @@
 # 本地嵌入检索增强 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **状态：已实现** — 所有步骤已核对并完成。
 
 **Goal:** 让 YanStory 的本地语义检索可用、可配置、可感知：FastEmbed 模型下载可指定缓存目录，嵌入向量记录模型版本并在模型/维度变化时自动失效重算，Studio 提供检索状态与重新嵌入入口。
 
