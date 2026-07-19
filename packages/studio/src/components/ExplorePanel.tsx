@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { BookInfo, SearchResult, CharacterItem, EventItem, RelationshipNode, RelationshipLink } from "../api/client.js";
+import type { BookInfo, SearchResult, CharacterItem, EventItem, RelationshipNode, RelationshipLink, EmbeddingConfigInfo } from "../api/client.js";
 import { api } from "../api/client.js";
 import { CluesPanel } from "./CluesPanel.js";
 
@@ -58,6 +58,34 @@ function SearchPanel({ book, loading, setLoading, setError }: PanelProps) {
   const [query, setQuery] = useState("");
   const [nodeType, setNodeType] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [config, setConfig] = useState<EmbeddingConfigInfo | null>(null);
+
+  async function loadConfig() {
+    try {
+      const result = await api.getEmbeddingConfig(book.id);
+      setConfig(result.config);
+    } catch {
+      setConfig(null);
+    }
+  }
+
+  async function reindex() {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.reindexEmbeddings(book.id);
+      await loadConfig();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book.id]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -76,6 +104,13 @@ function SearchPanel({ book, loading, setLoading, setError }: PanelProps) {
 
   return (
     <div>
+      {config && (
+        <div style={{ marginBottom: 16, fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 8 }}>
+          <span>Embedding: {config.provider} / {config.model} ({config.dimension}d)</span>
+          <button onClick={reindex} disabled={loading}>Reindex</button>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <input
           value={query}

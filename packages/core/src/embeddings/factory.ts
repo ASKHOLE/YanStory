@@ -43,7 +43,7 @@ export function createEmbeddingProvider(config: ResolvedEmbeddingConfig): Embedd
     return new HashEmbeddingProvider(config.dimension);
   }
   const modelName = resolveModelName(config.model);
-  return new FastEmbedProvider(modelName, config.dimension);
+  return new FastEmbedProvider(modelName, config.dimension, config.cacheDir);
 }
 
 export { HashEmbeddingProvider, FastEmbedProvider };

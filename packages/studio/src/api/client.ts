@@ -111,6 +111,13 @@ export interface RelationshipLink {
   scenes: string[];
 }
 
+export interface EmbeddingConfigInfo {
+  provider: "fastembed" | "hash";
+  model: string;
+  dimension: number;
+  cacheDir?: string;
+}
+
 export const api = {
   health: () => fetchJson<{ ok: boolean }>("/health"),
 
@@ -257,5 +264,13 @@ export const api = {
   mergeBranches: (id: string, sourceBranchId: string) =>
     fetchJson<{ proposal: MergeProposal }>(`/books/${id}/branches/${sourceBranchId}/merge`, {
       method: "POST",
+    }),
+
+  getEmbeddingConfig: (id: string) => fetchJson<{ config: EmbeddingConfigInfo }>(`/books/${id}/embedding-config`),
+
+  reindexEmbeddings: (id: string, nodeTypes?: string[]) =>
+    fetchJson<{ ok: boolean }>(`/books/${id}/reindex-embeddings`, {
+      method: "POST",
+      body: JSON.stringify({ nodeTypes }),
     }),
 };

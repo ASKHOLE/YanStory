@@ -1,6 +1,7 @@
 export interface EmbeddingProvider {
   embed(texts: string[]): Promise<number[][]>;
   dimension(): number;
+  model(): string;
 }
 
 export interface EmbedRecord {

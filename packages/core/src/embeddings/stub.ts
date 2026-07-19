@@ -21,6 +21,10 @@ export class HashEmbeddingProvider implements EmbeddingProvider {
     return this.dimensionValue;
   }
 
+  model(): string {
+    return "hash";
+  }
+
   private embedSingle(text: string): number[] {
     const vector = new Array(this.dimensionValue).fill(0);
     const words = text

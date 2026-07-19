@@ -11,6 +11,7 @@ import { createReaderRoutes } from "./routes/reader.js";
 import { createCritiqueRoutes } from "./routes/critique.js";
 import { createCluesRoutes } from "./routes/clues.js";
 import { createBranchesRoutes } from "./routes/branches.js";
+import { createEmbeddingsRoutes } from "./routes/embeddings.js";
 
 export function createApiApp(manager: BookManager): Hono {
   const app = new Hono();
@@ -29,6 +30,7 @@ export function createApiApp(manager: BookManager): Hono {
   app.route("/books", createCritiqueRoutes(manager));
   app.route("/books", createCluesRoutes(manager));
   app.route("/books", createBranchesRoutes(manager));
+  app.route("/books", createEmbeddingsRoutes(manager));
 
   return app;
 }

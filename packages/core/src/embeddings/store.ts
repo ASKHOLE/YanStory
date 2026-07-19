@@ -61,6 +61,11 @@ export class EmbeddingStore {
     return this.provider.embed(texts);
   }
 
+  deleteByModel(bookId: string, model: string): void {
+    const stmt = this.store.prepare("DELETE FROM embeddings WHERE book_id = ? AND model = ?");
+    stmt.run(bookId, model);
+  }
+
   async findSimilar(
     bookId: string,
     queryVector: number[],

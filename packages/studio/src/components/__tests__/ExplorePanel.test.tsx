@@ -27,6 +27,13 @@ describe("ExplorePanel", () => {
 
   beforeEach(() => {
     vi.stubGlobal("fetch", mockFetch);
+    mockFetch.mockImplementation((url) => {
+      if (typeof url === "string" && url.includes("/books/book-1/embedding-config")) {
+        return Promise.resolve(jsonResponse({ config: { provider: "hash", model: "hash", dimension: 384 } }));
+      }
+      return Promise.resolve(undefined as unknown as Response);
+    });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ config: { provider: "hash", model: "hash", dimension: 384 } }));
   });
 
   afterEach(() => {
@@ -143,5 +150,42 @@ describe("ExplorePanel", () => {
       expect(screen.getByText("Hidden letter")).toBeInTheDocument();
     });
     expect(screen.getByText((content) => content.includes("Planted in: Awakening"))).toBeInTheDocument();
+  });
+
+  it("displays embedding config in the search panel", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ config: { provider: "hash", model: "hash", dimension: 384 } })
+    );
+
+    render(<ExplorePanel book={sampleBook} />);
+
+    await waitFor(() => {
+      const status = screen.getByText((_, element) =>
+        element?.tagName === "SPAN" && element.textContent === "Embedding: hash / hash (384d)"
+      );
+      expect(status).toBeInTheDocument();
+    });
+  });
+
+  it("calls reindex API when Reindex is clicked", async () => {
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ config: { provider: "hash", model: "hash", dimension: 384 } }))
+      .mockResolvedValueOnce(jsonResponse({ ok: true }))
+      .mockResolvedValueOnce(jsonResponse({ config: { provider: "hash", model: "hash", dimension: 384 } }));
+
+    render(<ExplorePanel book={sampleBook} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Reindex" })).toBeEnabled();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Reindex" }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/books/book-1/reindex-embeddings"),
+        expect.objectContaining({ method: "POST" })
+      );
+    });
   });
 });

@@ -13,18 +13,22 @@ type StandardEmbeddingModel =
   | EmbeddingModel.MLE5Large;
 
 export class FastEmbedProvider implements EmbeddingProvider {
-  private model?: FlagEmbedding;
+  private instance?: FlagEmbedding;
   private readonly modelName: StandardEmbeddingModel;
   private readonly dimensionValue: number;
+  private readonly cacheDir?: string;
 
-  constructor(modelName: StandardEmbeddingModel = DEFAULT_MODEL, dimension = 384) {
+  constructor(modelName: StandardEmbeddingModel = DEFAULT_MODEL, dimension = 384, cacheDir?: string) {
     this.modelName = modelName;
     this.dimensionValue = dimension;
+    this.cacheDir = cacheDir;
   }
 
   async embed(texts: string[]): Promise<number[][]> {
-    if (!this.model) {
-      this.model = await FlagEmbedding.init({ model: this.modelName });
+    if (!this.instance) {
+      const initOptions: { model: StandardEmbeddingModel; cacheDir?: string } = { model: this.modelName };
+      if (this.cacheDir) initOptions.cacheDir = this.cacheDir;
+      this.instance = await FlagEmbedding.init(initOptions);
     }
 
     const results: number[][] = [];
@@ -32,7 +36,7 @@ export class FastEmbedProvider implements EmbeddingProvider {
 
     for (let i = 0; i < texts.length; i += batchSize) {
       const batch = texts.slice(i, i + batchSize);
-      const generator = this.model.embed(batch, batchSize);
+      const generator = this.instance.embed(batch, batchSize);
       for await (const vectors of generator) {
         results.push(...vectors);
       }
@@ -43,5 +47,9 @@ export class FastEmbedProvider implements EmbeddingProvider {
 
   dimension(): number {
     return this.dimensionValue;
+  }
+
+  model(): string {
+    return this.modelName;
   }
 }

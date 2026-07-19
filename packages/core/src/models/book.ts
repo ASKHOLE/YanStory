@@ -231,12 +231,18 @@ export class Book {
       .findNodes({ bookId: this.id })
       .filter((node) => !nodeTypes || nodeTypes.length === 0 || nodeTypes.includes(node.type));
 
-    const nodesNeedingEmbeddings = nodes.filter((node) => !this.embeddingStore!.get(this.id, node.id));
+    const model = this.embeddingProvider.model();
+    const dimension = this.embeddingProvider.dimension();
+
+    const nodesNeedingEmbeddings = nodes.filter((node) => {
+      const existing = this.embeddingStore!.get(this.id, node.id);
+      if (!existing) return true;
+      return existing.model !== model || existing.vector.length !== dimension;
+    });
     if (nodesNeedingEmbeddings.length === 0) return;
 
     const texts = nodesNeedingEmbeddings.map((node) => this.nodeToEmbedText(node));
     const vectors = await this.embeddingProvider.embed(texts);
-    const model = "stub";
     const now = new Date().toISOString();
 
     for (let i = 0; i < nodesNeedingEmbeddings.length; i++) {

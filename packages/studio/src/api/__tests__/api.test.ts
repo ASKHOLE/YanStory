@@ -499,4 +499,40 @@ describe("Studio API", () => {
     });
     expect(proposal.conflicts).toHaveLength(0);
   });
+
+  it("returns embedding config", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Embedding Config Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const configRes = await app.request(`/books/${id}/embedding-config`);
+    expect(configRes.status).toBe(200);
+    const { config } = await configRes.json();
+    expect(config.provider).toBe("hash");
+    expect(config.model).toBe("hash");
+    expect(config.dimension).toBe(384);
+  });
+
+  it("reindexes embeddings", async () => {
+    const app = createApp();
+    const createRes = await app.request("/books", {
+      method: "POST",
+      body: JSON.stringify({ title: "Reindex Test", genre: "xuanhuan" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { id } = await createRes.json();
+
+    const reindexRes = await app.request(`/books/${id}/reindex-embeddings`, {
+      method: "POST",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(reindexRes.status).toBe(200);
+    const result = await reindexRes.json();
+    expect(result.ok).toBe(true);
+  });
 });

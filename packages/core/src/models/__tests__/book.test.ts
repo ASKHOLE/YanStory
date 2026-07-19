@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
-import { Book, createLLMStub, LLMStub } from "../../index.js";
+import { Book, createLLMStub, LLMStub, createHashEmbeddingProvider } from "../../index.js";
 
 async function createTempDir(): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), "yanstory-test-"));
@@ -88,5 +88,40 @@ describe("Book live-artifact flow", () => {
     const proposal = await book.proposePatch();
     expect(proposal.operations.length).toBeGreaterThan(0);
     expect(proposal.operations.some((op) => String(op.properties?.text ?? "").includes("haunted"))).toBe(true);
+  });
+});
+
+describe("Book embedding lifecycle", () => {
+  let projectRoot: string;
+  let book: Book;
+
+  beforeEach(async () => {
+    projectRoot = await createTempDir();
+    book = await Book.create({ projectRoot, title: "Embed Test", genre: "xuanhuan" });
+  });
+
+  afterEach(async () => {
+    book.close();
+    await removeDir(projectRoot);
+  });
+
+  it("stores embeddings with the provider model identifier", async () => {
+    book.setEmbeddingProvider(createHashEmbeddingProvider(384));
+    await book.ensureEmbeddings();
+
+    const record = book.getEmbeddingStore()?.get(book.id, "book");
+    expect(record).toBeDefined();
+    expect(record?.model).toBe("hash");
+    expect(record?.vector.length).toBe(384);
+  });
+
+  it("recomputes embeddings when dimension changes", async () => {
+    book.setEmbeddingProvider(createHashEmbeddingProvider(384));
+    await book.ensureEmbeddings();
+    expect(book.getEmbeddingStore()?.get(book.id, "book")?.vector.length).toBe(384);
+
+    book.setEmbeddingProvider(createHashEmbeddingProvider(128));
+    await book.ensureEmbeddings();
+    expect(book.getEmbeddingStore()?.get(book.id, "book")?.vector.length).toBe(128);
   });
 });

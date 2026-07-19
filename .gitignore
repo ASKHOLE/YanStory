@@ -10,3 +10,4 @@ CLAUDE.md
 .omc/
 .claude/
 packages/studio/books/
+local_cache/

@@ -12,6 +12,7 @@ import {
   resolveEmbeddingConfig,
   createEmbeddingProvider,
   createHashEmbeddingProvider,
+  HashEmbeddingProvider,
   type LLMClient,
   type EmbeddingProvider,
   type ResolvedEmbeddingConfig,
@@ -97,6 +98,24 @@ export class BookManager {
       book.close();
     }
     this.openBooks.clear();
+  }
+
+  getEmbeddingConfig(): ResolvedEmbeddingConfig {
+    const provider = this.embeddingProvider;
+    const base = this.embeddingConfig;
+    if (provider instanceof HashEmbeddingProvider) {
+      return {
+        provider: "hash",
+        model: provider.model(),
+        dimension: provider.dimension(),
+      };
+    }
+    return {
+      provider: "fastembed",
+      model: provider.model(),
+      dimension: provider.dimension(),
+      cacheDir: base.cacheDir,
+    };
   }
 
   async forkBranch(bookId: string, name: string): Promise<Branch> {
