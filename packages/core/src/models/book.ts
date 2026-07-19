@@ -6,6 +6,7 @@ import { ensureBookLayout, getBookPaths, type BookPaths } from "../project/layou
 import { type GraphNode, type NodeType, type Branch } from "../graph/types.js";
 import type { LLMClient } from "../llm/client.js";
 import type { EmbeddingProvider } from "../embeddings/types.js";
+import { PromptCache } from "../operations/prompt-cache.js";
 import { compose } from "../operations/compose.js";
 import { edit } from "../operations/edit.js";
 import { query } from "../operations/query.js";
@@ -49,6 +50,7 @@ export class Book {
   llmClient: LLMClient | undefined;
   private embeddingProvider?: EmbeddingProvider;
   private embeddingStore?: EmbeddingStore;
+  private readonly promptCache = new PromptCache();
 
   private constructor(id: string, projectRoot: string, store: GraphStore, paths: BookPaths) {
     this.id = id;
@@ -216,10 +218,38 @@ export class Book {
   setEmbeddingProvider(provider: EmbeddingProvider): void {
     this.embeddingProvider = provider;
     this.embeddingStore = new EmbeddingStore(this.store, provider);
+    this.promptCache.clear();
   }
 
   getEmbeddingStore(): EmbeddingStore | undefined {
     return this.embeddingStore;
+  }
+
+  async compilePrompt<T extends Record<string, unknown>>(
+    operation: string,
+    options: T,
+    builder: () => Promise<string>
+  ): Promise<string> {
+    return this.promptCache.compile(
+      { operation, options: this.normalizeCacheOptions(options) },
+      this.getPromptCacheVersion(),
+      builder
+    );
+  }
+
+  private getPromptCacheVersion(): string {
+    const embedding = this.embeddingProvider
+      ? `${this.embeddingProvider.model()}:${this.embeddingProvider.dimension()}`
+      : "none";
+    return `${this.store.getStateVersion()}:${embedding}`;
+  }
+
+  private normalizeCacheOptions(options: Record<string, unknown>): Record<string, unknown> {
+    const normalized: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(options).sort()) {
+      normalized[k] = Array.isArray(v) ? [...v].sort() : v;
+    }
+    return normalized;
   }
 
   async ensureEmbeddings(nodeTypes?: string[]): Promise<void> {

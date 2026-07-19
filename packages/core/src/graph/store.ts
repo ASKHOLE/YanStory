@@ -24,6 +24,7 @@ function parseProperties(raw: string): Record<string, unknown> {
 
 export class GraphStore {
   private db: Database.Database;
+  private stateVersion = 0;
 
   constructor(dbPath: string) {
     this.db = new Database(dbPath);
@@ -44,7 +45,16 @@ export class GraphStore {
     return this.db.prepare(sql);
   }
 
+  getStateVersion(): number {
+    return this.stateVersion;
+  }
+
+  private bumpStateVersion(): void {
+    this.stateVersion += 1;
+  }
+
   createNode(node: GraphNode): void {
+    this.bumpStateVersion();
     const stmt = this.db.prepare(
       `INSERT INTO nodes (id, book_id, type, label, content_uri, properties, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
@@ -86,6 +96,7 @@ export class GraphStore {
 
     if (sets.length === 0) return;
 
+    this.bumpStateVersion();
     sets.push("updated_at = ?");
     values.push(new Date().toISOString());
     values.push(bookId, id);
@@ -95,6 +106,7 @@ export class GraphStore {
   }
 
   deleteNode(bookId: string, id: string): void {
+    this.bumpStateVersion();
     const stmt = this.db.prepare("DELETE FROM nodes WHERE book_id = ? AND id = ?");
     stmt.run(bookId, id);
   }
@@ -134,6 +146,7 @@ export class GraphStore {
   }
 
   createEdge(edge: GraphEdge): void {
+    this.bumpStateVersion();
     const stmt = this.db.prepare(
       `INSERT INTO edges (id, book_id, type, from_id, to_id, properties, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -186,6 +199,7 @@ export class GraphStore {
   }
 
   deleteEdge(bookId: string, id: string): void {
+    this.bumpStateVersion();
     const stmt = this.db.prepare("DELETE FROM edges WHERE book_id = ? AND id = ?");
     stmt.run(bookId, id);
   }
@@ -232,6 +246,7 @@ export class GraphStore {
   }
 
   createBranch(branch: Branch): void {
+    this.bumpStateVersion();
     const stmt = this.db.prepare(
       `INSERT INTO branches (id, book_id, name, source_branch_id, source_snapshot_id, head_snapshot_id, current, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
@@ -265,6 +280,7 @@ export class GraphStore {
   }
 
   setBranchCurrent(bookId: string, branchId: string): void {
+    this.bumpStateVersion();
     const clearStmt = this.db.prepare(
       "UPDATE branches SET current = 0 WHERE book_id = ?"
     );
@@ -276,6 +292,7 @@ export class GraphStore {
   }
 
   updateBranchHead(bookId: string, branchId: string, snapshotId: string): void {
+    this.bumpStateVersion();
     const stmt = this.db.prepare(
       "UPDATE branches SET head_snapshot_id = ? WHERE book_id = ? AND id = ?"
     );

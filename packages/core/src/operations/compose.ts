@@ -52,7 +52,11 @@ export async function compose(book: Book, options: ComposeOptions): Promise<Comp
   const chapterId = `chapter-${chapterNumber.toString().padStart(4, "0")}`;
   const sceneId = `${chapterId}/scene-1`;
 
-  const prompt = await buildComposePrompt(book, chapterNumber, options);
+  const prompt = await book.compilePrompt(
+    "compose",
+    { intent: options.intent, targetWords: options.targetWords },
+    () => buildComposePrompt(book, chapterNumber, options)
+  );
   const result = await book.llmClient({ messages: [{ role: "user", content: prompt }] });
   const content = result.content;
   const paragraphs = content.split(/\n\s*\n/).filter((p) => p.trim().length > 0);

@@ -18,22 +18,28 @@ export async function edit(book: Book, options: EditOptions): Promise<EditResult
     throw new Error(`Target not found: ${options.target}`);
   }
 
-  const currentText = (node.properties.text as string) ?? "";
-  const retrievalContext = await buildRetrievalContext(book, {
-    queryText: `${options.operation} ${options.instruction ?? ""} ${currentText}`.trim(),
-    nodeTypes: ["character", "location", "event", "chapter"],
-    topK: 5,
-  });
-  const prompt = [
-    `Edit the following text. Operation: ${options.operation}`,
-    options.instruction ? `Instruction: ${options.instruction}` : "",
-    retrievalContext,
-    "Current text:",
-    currentText,
-    "Edited text:",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const prompt = await book.compilePrompt(
+    "edit",
+    { target: options.target, operation: options.operation, instruction: options.instruction },
+    async () => {
+      const currentText = (node.properties.text as string) ?? "";
+      const retrievalContext = await buildRetrievalContext(book, {
+        queryText: `${options.operation} ${options.instruction ?? ""} ${currentText}`.trim(),
+        nodeTypes: ["character", "location", "event", "chapter"],
+        topK: 5,
+      });
+      return [
+        `Edit the following text. Operation: ${options.operation}`,
+        options.instruction ? `Instruction: ${options.instruction}` : "",
+        retrievalContext,
+        "Current text:",
+        currentText,
+        "Edited text:",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+    }
+  );
 
   const result = await book.llmClient({ messages: [{ role: "user", content: prompt }] });
   const newText = result.content.trim();
