@@ -6,7 +6,7 @@ import { logOperation } from "./logger.js";
 
 import { buildRetrievalContext } from "./retrieval.js";
 import { snapshot } from "./snapshot.js";
-import { assertConstraints } from "../constraints/engine.js";
+import { assertConstraints, assertCausalConstraints } from "../constraints/engine.js";
 
 export async function edit(book: Book, options: EditOptions): Promise<EditResult> {
   if (!book.llmClient) {
@@ -16,6 +16,13 @@ export async function edit(book: Book, options: EditOptions): Promise<EditResult
   const node = book.resolver.resolveSingle(book.id, options.target);
   if (!node) {
     throw new Error(`Target not found: ${options.target}`);
+  }
+
+  if (!options.skipCausalPrecheck) {
+    assertCausalConstraints(book, {
+      targetPath: options.target,
+      intent: `${options.operation} ${options.instruction ?? ""}`.trim(),
+    });
   }
 
   const prompt = await book.compilePrompt(

@@ -47,4 +47,21 @@ describe("compose with constraints", () => {
     const result = await book.compose({ intent: "普通场景", targetWords: 50 });
     expect(result.node).toBeDefined();
   });
+
+  it("throws ConstraintError before LLM when causal precheck fails", async () => {
+    book.addConstraint("never 主角死亡");
+    await expect(book.compose({ intent: "主角死亡", targetWords: 50 })).rejects.toThrow(
+      ConstraintError
+    );
+  });
+
+  it("does not throw when skipCausalPrecheck is true", async () => {
+    book.addConstraint("never 主角死亡");
+    const result = await book.compose({
+      intent: "主角死亡",
+      targetWords: 50,
+      skipCausalPrecheck: true,
+    });
+    expect(result.node).toBeDefined();
+  });
 });

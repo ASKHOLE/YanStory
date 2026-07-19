@@ -17,6 +17,7 @@ export function createOperationsRoutes(manager: BookManager) {
       intent: String(body.intent ?? ""),
       targetWords: body.targetWords ? Number(body.targetWords) : undefined,
       skipConstraints: Boolean(body.skipConstraints),
+      skipCausalPrecheck: Boolean(body.skipCausalPrecheck),
     });
 
     return c.json({
@@ -40,6 +41,7 @@ export function createOperationsRoutes(manager: BookManager) {
       operation: String(body.operation),
       instruction: body.instruction ? String(body.instruction) : undefined,
       skipConstraints: Boolean(body.skipConstraints),
+      skipCausalPrecheck: Boolean(body.skipCausalPrecheck),
     });
 
     return c.json({

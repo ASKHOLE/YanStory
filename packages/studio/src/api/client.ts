@@ -76,7 +76,41 @@ export type ConstraintTimelineItem =
       target?: ConstraintTimelineTarget;
       startChapterNumber: number | null;
       endChapterNumber: number | null;
+    }
+  | {
+      id: string;
+      dsl: string;
+      kind: "never";
+      subject: string;
+      target?: ConstraintTimelineTarget;
+      startChapterNumber: number | null;
+      endChapterNumber: number | null;
+    }
+  | {
+      id: string;
+      dsl: string;
+      kind: "prevent";
+      event: string;
+      target?: ConstraintTimelineTarget;
+      startChapterNumber: number | null;
+      endChapterNumber: number | null;
+    }
+  | {
+      id: string;
+      dsl: string;
+      kind: "cannot";
+      actor: string;
+      action: string;
+      target?: ConstraintTimelineTarget;
+      startChapterNumber: number | null;
+      endChapterNumber: number | null;
     };
+
+export interface ConstraintViolation {
+  constraintId: string;
+  dsl: string;
+  message: string;
+}
 
 export interface SearchResult {
   nodeId: string;
@@ -134,16 +168,16 @@ export const api = {
 
   getBookInfo: (id: string) => fetchJson<BookInfo>(`/books/${id}/info`),
 
-  compose: (id: string, intent: string, targetWords?: number, skipConstraints?: boolean) =>
+  compose: (id: string, intent: string, targetWords?: number, skipConstraints?: boolean, skipCausalPrecheck?: boolean) =>
     fetchJson<{ nodeId: string; contentPath: string; wordCount: number }>(`/books/${id}/compose`, {
       method: "POST",
-      body: JSON.stringify({ intent, targetWords, skipConstraints }),
+      body: JSON.stringify({ intent, targetWords, skipConstraints, skipCausalPrecheck }),
     }),
 
-  edit: (id: string, target: string, operation: string, instruction?: string) =>
+  edit: (id: string, target: string, operation: string, instruction?: string, skipConstraints?: boolean, skipCausalPrecheck?: boolean) =>
     fetchJson<{ nodeId: string; contentPath: string }>(`/books/${id}/edit`, {
       method: "POST",
-      body: JSON.stringify({ target, operation, instruction }),
+      body: JSON.stringify({ target, operation, instruction, skipConstraints, skipCausalPrecheck }),
     }),
 
   query: (id: string, type: string, filters?: Record<string, string | string[] | undefined>) =>
@@ -159,6 +193,12 @@ export const api = {
 
   listConstraintTimeline: (id: string) =>
     fetchJson<{ timeline: ConstraintTimelineItem[] }>(`/books/${id}/constraints/timeline`),
+
+  precheckConstraints: (id: string, targetPath: string, intent: string) =>
+    fetchJson<{ violations: ConstraintViolation[] }>(`/books/${id}/constraints/precheck`, {
+      method: "POST",
+      body: JSON.stringify({ targetPath, intent }),
+    }),
 
   addConstraint: (id: string, dsl: string) =>
     fetchJson<ConstraintItem>(`/books/${id}/constraints`, {

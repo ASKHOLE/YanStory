@@ -1,5 +1,6 @@
 import type { Book } from "../models/book.js";
-import { ConstraintError, type ConstraintContext, type ConstraintRule, type Violation } from "./types.js";
+import { ConstraintError, type ConstraintContext, type ConstraintRule, type Violation, type CausalCondition } from "./types.js";
+import { isConditionSatisfied } from "./causal.js";
 
 export function checkConstraints(book: Book, context: ConstraintContext): Violation[] {
   const constraints = book.store.findNodes({ bookId: book.id, type: "constraint" });
@@ -38,6 +39,12 @@ function evaluateRule(
       return evaluateForbid(book, constraintId, dsl, rule, context);
     case "require":
       return evaluateRequire(book, constraintId, dsl, rule, context);
+    case "never":
+      return evaluateNever(book, constraintId, dsl, rule, context);
+    case "prevent":
+      return evaluatePrevent(book, constraintId, dsl, rule, context);
+    case "cannot":
+      return evaluateCannot(book, constraintId, dsl, rule, context);
     default:
       return undefined;
   }
@@ -192,4 +199,130 @@ function formatTarget(target?: { targetType: string; targetId: string }): string
     return target.targetId;
   }
   return `${target.targetType} ${target.targetId}`;
+}
+
+function evaluateNever(
+  book: Book,
+  constraintId: string,
+  dsl: string,
+  rule: Extract<ConstraintRule, { kind: "never" }>,
+  context: ConstraintContext
+): Violation | undefined {
+  if (textMentions(context.targetText, rule.subject)) {
+    return {
+      constraintId,
+      dsl,
+      message: `Never "${rule.subject}" violated at ${context.targetPath}`,
+    };
+  }
+  return undefined;
+}
+
+function evaluatePrevent(
+  book: Book,
+  constraintId: string,
+  dsl: string,
+  rule: Extract<ConstraintRule, { kind: "prevent" }>,
+  context: ConstraintContext
+): Violation | undefined {
+  if (!textMentions(context.targetText, rule.event)) return undefined;
+
+  const targetChapter = resolveTargetChapter(book, context.targetPath);
+  if (targetChapter === undefined) return undefined;
+
+  if (isConditionSatisfied(book, rule.until, targetChapter)) return undefined;
+
+  return {
+    constraintId,
+    dsl,
+    message: `Prevent "${rule.event}" violated at ${context.targetPath} (must wait until ${formatCondition(rule.until)})`,
+  };
+}
+
+function evaluateCannot(
+  book: Book,
+  constraintId: string,
+  dsl: string,
+  rule: Extract<ConstraintRule, { kind: "cannot" }>,
+  context: ConstraintContext
+): Violation | undefined {
+  if (
+    !textMentions(context.targetText, rule.actor) ||
+    !textMentions(context.targetText, rule.action)
+  ) {
+    return undefined;
+  }
+
+  const targetChapter = resolveTargetChapter(book, context.targetPath);
+  if (targetChapter === undefined) return undefined;
+
+  if (isConditionSatisfied(book, rule.until, targetChapter)) return undefined;
+
+  return {
+    constraintId,
+    dsl,
+    message: `Cannot "${rule.actor}" do "${rule.action}" violated at ${context.targetPath} (must wait until ${formatCondition(rule.until)})`,
+  };
+}
+
+function formatCondition(condition: CausalCondition): string {
+  switch (condition.kind) {
+    case "chapter":
+      return `chapter ${condition.targetId}`;
+    case "event":
+      return `event ${condition.targetId}`;
+    case "knows":
+      return `${condition.actor} knows ${condition.fact}`;
+    case "feels":
+      return condition.toward
+        ? `${condition.actor} feels ${condition.emotion} toward ${condition.toward}`
+        : `${condition.actor} feels ${condition.emotion}`;
+    case "state":
+      return `state ${condition.description}`;
+    default:
+      return String((condition as { kind: string }).kind);
+  }
+}
+
+function isCausalRule(rule: ConstraintRule): rule is
+  | Extract<ConstraintRule, { kind: "never" }>
+  | Extract<ConstraintRule, { kind: "prevent" }>
+  | Extract<ConstraintRule, { kind: "cannot" }> {
+  return rule.kind === "never" || rule.kind === "prevent" || rule.kind === "cannot";
+}
+
+export function precheckCausalConstraints(
+  book: Book,
+  context: Pick<ConstraintContext, "targetPath" | "intent">
+): Violation[] {
+  const constraints = book.store.findNodes({ bookId: book.id, type: "constraint" });
+  const violations: Violation[] = [];
+  const fullContext: ConstraintContext = {
+    targetPath: context.targetPath,
+    targetText: context.intent ?? "",
+    intent: context.intent,
+  };
+
+  for (const node of constraints) {
+    const dsl = String(node.properties.dsl ?? "");
+    if (!dsl) continue;
+    const rule = node.properties.rule as ConstraintRule | undefined;
+    if (!rule) continue;
+    if (!isCausalRule(rule)) continue;
+
+    const violation = evaluateRule(book, node.id, dsl, rule, fullContext);
+    if (violation) violations.push(violation);
+  }
+
+  return violations;
+}
+
+export function assertCausalConstraints(
+  book: Book,
+  context: Pick<ConstraintContext, "targetPath" | "intent">
+): void {
+  const violations = precheckCausalConstraints(book, context);
+  if (violations.length > 0) {
+    throw new ConstraintError(violations);
+  }
 }

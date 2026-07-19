@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { buildConstraintTimeline } from "@yanstory/core";
+import { buildConstraintTimeline, precheckCausalConstraints } from "@yanstory/core";
 import type { BookManager } from "../book-manager.js";
 
 export function createConstraintsRoutes(manager: BookManager) {
@@ -38,6 +38,17 @@ export function createConstraintsRoutes(manager: BookManager) {
     const book = await manager.getBook(bookId);
     book.removeConstraint(constraintId);
     return c.json({ ok: true });
+  });
+
+  app.post("/:id/constraints/precheck", async (c) => {
+    const bookId = c.req.param("id");
+    const body = await c.req.json();
+    const book = await manager.getBook(bookId);
+    const violations = precheckCausalConstraints(book, {
+      targetPath: String(body.targetPath ?? ""),
+      intent: String(body.intent ?? ""),
+    });
+    return c.json({ violations });
   });
 
   return app;

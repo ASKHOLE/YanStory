@@ -3,6 +3,7 @@ import type {
   BookInfo,
   ConstraintItem,
   ConstraintTimelineItem,
+  ConstraintViolation,
 } from "../api/client.js";
 import { api } from "../api/client.js";
 
@@ -21,6 +22,16 @@ interface ChapterInfo {
   chapterNumber: number;
 }
 
+function constraintKind(dsl: string): string {
+  const lower = dsl.trim().toLowerCase();
+  if (lower.startsWith("forbid ")) return "forbid";
+  if (lower.startsWith("require ")) return "require";
+  if (lower.startsWith("never ")) return "never";
+  if (lower.startsWith("prevent ")) return "prevent";
+  if (lower.startsWith("cannot ")) return "cannot";
+  return "constraint";
+}
+
 export function ConstraintsPanel({
   book,
   loading,
@@ -31,6 +42,9 @@ export function ConstraintsPanel({
   const [constraints, setConstraints] = useState<ConstraintItem[]>([]);
   const [timeline, setTimeline] = useState<ConstraintTimelineItem[]>([]);
   const [chapters, setChapters] = useState<ChapterInfo[]>([]);
+  const [precheckTarget, setPrecheckTarget] = useState("");
+  const [precheckIntent, setPrecheckIntent] = useState("");
+  const [precheckViolations, setPrecheckViolations] = useState<ConstraintViolation[]>([]);
 
   async function loadList() {
     const result = await api.listConstraints(book.id);
@@ -78,12 +92,18 @@ export function ConstraintsPanel({
     });
   }
 
+  async function runPrecheck(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const result = await api.precheckConstraints(book.id, precheckTarget, precheckIntent);
+    setPrecheckViolations(result.violations);
+  }
+
   return (
     <div>
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <input
           name="dsl"
-          placeholder="e.g. forbid 魔法 until chapter-0004"
+          placeholder="e.g. forbid 魔法 until chapter-0004, never 主角死亡, prevent ..."
           style={{ flex: 1 }}
           required
         />
@@ -100,11 +120,50 @@ export function ConstraintsPanel({
         <button onClick={load} disabled={loading}>Refresh</button>
       </div>
 
+      {view === "list" && (
+        <form onSubmit={runPrecheck} style={{ marginBottom: 16, padding: 12, border: "1px solid #e5e7eb", borderRadius: 6 }}>
+          <div style={{ marginBottom: 8, fontWeight: 600 }}>Causal pre-check</div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <input
+              placeholder="Target path (e.g. chapter-0002/scene-1/paragraph-1)"
+              value={precheckTarget}
+              onChange={(e) => setPrecheckTarget(e.target.value)}
+              style={{ flex: 1 }}
+              required
+            />
+            <input
+              placeholder="Intent / text to check"
+              value={precheckIntent}
+              onChange={(e) => setPrecheckIntent(e.target.value)}
+              style={{ flex: 1 }}
+              required
+            />
+            <button type="submit" disabled={loading}>Pre-check</button>
+          </div>
+          {precheckViolations.length === 0 ? (
+            precheckTarget && precheckIntent && (
+              <p style={{ color: "#15803d", margin: 0 }}>No causal violations detected.</p>
+            )
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {precheckViolations.map((v) => (
+                <li key={v.constraintId} style={{ color: "#991b1b", marginBottom: 4 }}>
+                  {v.message}
+                </li>
+              ))}
+            </ul>
+          )}
+        </form>
+      )}
+
       {view === "list" ? (
         <ul style={{ listStyle: "none", padding: 0 }}>
           {constraints.map((c) => (
             <li key={c.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e5e7eb" }}>
-              <span><code>{c.id}</code>: {c.dsl}</span>
+              <span>
+                <KindBadge kind={constraintKind(c.dsl)} />
+                <code>{c.id}</code>: {c.dsl}
+              </span>
               <button onClick={() => remove(c.id)} disabled={loading}>Remove</button>
             </li>
           ))}
@@ -113,6 +172,26 @@ export function ConstraintsPanel({
         <ConstraintTimeline timeline={timeline} chapters={chapters} />
       )}
     </div>
+  );
+}
+
+function KindBadge({ kind }: { kind: string }) {
+  const isNegative = kind === "forbid" || kind === "never" || kind === "prevent" || kind === "cannot";
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "2px 6px",
+        borderRadius: 4,
+        fontSize: 10,
+        textTransform: "uppercase",
+        background: isNegative ? "#fee2e2" : "#dbeafe",
+        color: isNegative ? "#991b1b" : "#1e40af",
+        marginRight: 6,
+      }}
+    >
+      {kind}
+    </span>
   );
 }
 
@@ -180,34 +259,31 @@ function ConstraintTimeline({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {timeline.map((item) => (
-          <div key={item.id} style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ width: 120, fontSize: 12, paddingRight: 8, wordBreak: "break-word" }}>
-              <span
-                style={{
-                  display: "inline-block",
-                  padding: "2px 6px",
-                  borderRadius: 4,
-                  fontSize: 10,
-                  textTransform: "uppercase",
-                  background: item.kind === "forbid" ? "#fee2e2" : "#dbeafe",
-                  color: item.kind === "forbid" ? "#991b1b" : "#1e40af",
-                  marginRight: 6,
-                }}
-              >
-                {item.kind}
-              </span>
-              {item.kind === "forbid" ? item.subject : item.event}
+        {timeline.map((item) => {
+          const isRange =
+            item.kind === "forbid" || item.kind === "never" || item.kind === "prevent" || item.kind === "cannot";
+          const label =
+            item.kind === "forbid" || item.kind === "never"
+              ? item.subject
+              : item.kind === "require" || item.kind === "prevent"
+              ? item.event
+              : `${item.actor} ${item.action}`;
+          return (
+            <div key={item.id} style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ width: 120, fontSize: 12, paddingRight: 8, wordBreak: "break-word" }}>
+                <KindBadge kind={item.kind} />
+                {label}
+              </div>
+              <div style={{ position: "relative", flex: 1, height: 24 }}>
+                {isRange ? (
+                  <ConstraintBar item={item} chapterPositions={chapterPositions} maxChapter={maxChapter} />
+                ) : (
+                  <RequireMarker item={item as Extract<ConstraintTimelineItem, { kind: "require" }>} chapterPositions={chapterPositions} />
+                )}
+              </div>
             </div>
-            <div style={{ position: "relative", flex: 1, height: 24 }}>
-              {item.kind === "forbid" ? (
-                <ForbidBar item={item} chapterPositions={chapterPositions} maxChapter={maxChapter} />
-              ) : (
-                <RequireMarker item={item} chapterPositions={chapterPositions} />
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {timeline.length === 0 && (
@@ -217,12 +293,15 @@ function ConstraintTimeline({
   );
 }
 
-function ForbidBar({
+function ConstraintBar({
   item,
   chapterPositions,
   maxChapter,
 }: {
-  item: Extract<ConstraintTimelineItem, { kind: "forbid" }>;
+  item: Extract<
+    ConstraintTimelineItem,
+    { kind: "forbid" | "never" | "prevent" | "cannot" }
+  >;
   chapterPositions: Map<number, number>;
   maxChapter: number;
 }) {

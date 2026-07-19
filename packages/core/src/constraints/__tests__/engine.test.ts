@@ -85,4 +85,83 @@ describe("constraint engine", () => {
     });
     expect(violations.length).toBe(0);
   });
+
+  it("reports never violation when subject appears", () => {
+    book.addConstraint("never 主角死亡");
+    const violations = checkConstraints(book, {
+      targetPath: "chapter-0001/scene-1/paragraph-1",
+      targetText: "主角死亡了。",
+    });
+    expect(violations.length).toBe(1);
+    expect(violations[0].message).toContain('Never "主角死亡" violated');
+  });
+
+  it("reports prevent violation when event appears before condition chapter", () => {
+    book.addConstraint("prevent 主角使用魔法 until chapter-0004");
+    const violations = checkConstraints(book, {
+      targetPath: "chapter-0001/scene-1/paragraph-1",
+      targetText: "主角使用魔法。",
+    });
+    expect(violations.length).toBe(1);
+    expect(violations[0].message).toContain('Prevent "主角使用魔法" violated');
+  });
+
+  it("does not report prevent violation after condition chapter", async () => {
+    book.addConstraint("prevent 主角使用魔法 until chapter-0002");
+    await book.compose({ intent: "middle", targetWords: 50 });
+    const violations = checkConstraints(book, {
+      targetPath: "chapter-0002/scene-1/paragraph-1",
+      targetText: "主角使用了魔法。",
+    });
+    expect(violations.length).toBe(0);
+  });
+
+  it("reports cannot violation when actor and action appear without knowledge", () => {
+    book.addConstraint("cannot 主角 使用魔法 until 主角 knows 魔法存在");
+    const violations = checkConstraints(book, {
+      targetPath: "chapter-0001/scene-1/paragraph-1",
+      targetText: "主角使用魔法。",
+    });
+    expect(violations.length).toBe(1);
+    expect(violations[0].message).toContain('Cannot "主角" do "使用魔法" violated');
+  });
+
+  it("does not report cannot violation when knowledge condition is satisfied", () => {
+    book.addConstraint("cannot 主角 使用魔法 until 主角 knows 魔法存在");
+    const now = new Date().toISOString();
+    book.store.createNode({
+      id: "char-1",
+      bookId: book.id,
+      type: "character",
+      label: "主角",
+      contentUri: null,
+      properties: {},
+      createdAt: now,
+      updatedAt: now,
+    });
+    book.store.createNode({
+      id: "know-1",
+      bookId: book.id,
+      type: "knowledge",
+      label: "魔法存在",
+      contentUri: null,
+      properties: {},
+      createdAt: now,
+      updatedAt: now,
+    });
+    book.store.createEdge({
+      id: "edge-knows-1",
+      bookId: book.id,
+      type: "knows",
+      fromId: "char-1",
+      toId: "know-1",
+      properties: {},
+      createdAt: now,
+    });
+    const violations = checkConstraints(book, {
+      targetPath: "chapter-0001/scene-1/paragraph-1",
+      targetText: "主角使用了魔法。",
+    });
+    expect(violations.length).toBe(0);
+  });
 });

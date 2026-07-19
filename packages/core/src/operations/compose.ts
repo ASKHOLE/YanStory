@@ -7,7 +7,7 @@ import { logOperation } from "./logger.js";
 
 import { snapshot } from "./snapshot.js";
 import { buildRetrievalContext } from "./retrieval.js";
-import { assertConstraints } from "../constraints/engine.js";
+import { assertConstraints, assertCausalConstraints } from "../constraints/engine.js";
 
 function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -51,6 +51,13 @@ export async function compose(book: Book, options: ComposeOptions): Promise<Comp
   const chapterNumber = await getNextChapterNumber(book);
   const chapterId = `chapter-${chapterNumber.toString().padStart(4, "0")}`;
   const sceneId = `${chapterId}/scene-1`;
+
+  if (!options.skipCausalPrecheck) {
+    assertCausalConstraints(book, {
+      targetPath: chapterId,
+      intent: options.intent,
+    });
+  }
 
   const prompt = await book.compilePrompt(
     "compose",

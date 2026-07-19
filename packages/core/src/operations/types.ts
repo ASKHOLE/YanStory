@@ -6,16 +6,20 @@ export interface ComposeOptions {
   intent: string;
   targetWords?: number;
   target?: string;
-  /** Skip causal/constraint pre-checks. Defaults to false. */
+  /** Skip post-generation constraint checks. Defaults to false. */
   skipConstraints?: boolean;
+  /** Skip causal pre-check before LLM call. Defaults to false. */
+  skipCausalPrecheck?: boolean;
 }
 
 export interface EditOptions {
   target: string;
   operation: string;
   instruction?: string;
-  /** Skip causal/constraint pre-checks. Defaults to false. */
+  /** Skip post-generation constraint checks. Defaults to false. */
   skipConstraints?: boolean;
+  /** Skip causal pre-check before LLM call. Defaults to false. */
+  skipCausalPrecheck?: boolean;
 }
 
 export interface ComposeResult {

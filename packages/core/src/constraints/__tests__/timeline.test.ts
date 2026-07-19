@@ -128,4 +128,50 @@ describe("buildConstraintTimeline", () => {
     });
     expect(timeline[0].endChapterNumber).toBe(9999);
   });
+
+  it("builds never timeline as open-ended bar", () => {
+    createChapter(book, "chapter-0001", "Opening", 1);
+    book.addConstraint("never 主角死亡");
+    const timeline = buildConstraintTimeline(book);
+    expect(timeline[0]).toMatchObject({
+      kind: "never",
+      subject: "主角死亡",
+      startChapterNumber: 1,
+      endChapterNumber: null,
+    });
+  });
+
+  it("builds prevent timeline until chapter", () => {
+    createChapter(book, "chapter-0001", "Opening", 1);
+    createChapter(book, "chapter-0004", "Reveal", 4);
+    book.addConstraint("prevent 主角使用魔法 until chapter-0004");
+    const timeline = buildConstraintTimeline(book);
+    expect(timeline[0]).toMatchObject({
+      kind: "prevent",
+      event: "主角使用魔法",
+      endChapterNumber: 4,
+    });
+  });
+
+  it("builds cannot timeline until event", () => {
+    createChapter(book, "chapter-0001", "Opening", 1);
+    createChapter(book, "chapter-0003", "Training", 3);
+    createEvent(book, "event-awaken", "Awakening", "chapter-0003");
+    book.addConstraint("cannot 主角 使用魔法 until event event-awaken");
+    const timeline = buildConstraintTimeline(book);
+    expect(timeline[0]).toMatchObject({
+      kind: "cannot",
+      actor: "主角",
+      action: "使用魔法",
+      endChapterNumber: 3,
+    });
+  });
+
+  it("leaves state condition without timeline target", () => {
+    createChapter(book, "chapter-0001", "Opening", 1);
+    book.addConstraint("prevent 主角出海 until state 风暴来临");
+    const timeline = buildConstraintTimeline(book);
+    expect(timeline[0].target).toBeUndefined();
+    expect(timeline[0].endChapterNumber).toBeNull();
+  });
 });

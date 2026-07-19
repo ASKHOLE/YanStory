@@ -1,5 +1,10 @@
 import type { Book } from "../models/book.js";
-import type { ConstraintRule, ConstraintTimelineItem, ConstraintTimelineTarget } from "./types.js";
+import type {
+  ConstraintRule,
+  ConstraintTimelineItem,
+  ConstraintTimelineTarget,
+  CausalCondition,
+} from "./types.js";
 import type { GraphNode } from "../graph/types.js";
 import { resolveConditionChapter } from "./engine.js";
 
@@ -37,6 +42,19 @@ function resolveTarget(
   return { type: "event", id: targetId, label: targetId, chapterNumber };
 }
 
+function resolveConditionTarget(
+  book: Book,
+  condition: CausalCondition
+): ConstraintTimelineTarget | undefined {
+  if (condition.kind === "chapter") {
+    return resolveTarget(book, "chapter", condition.targetId);
+  }
+  if (condition.kind === "event") {
+    return resolveTarget(book, "event", condition.targetId);
+  }
+  return undefined;
+}
+
 export function buildConstraintTimeline(book: Book): ConstraintTimelineItem[] {
   const chapters = getSortedChapters(book);
   const firstChapterNumber = chapters.length > 0 ? Number(chapters[0].properties.chapterNumber ?? 1) : 1;
@@ -67,6 +85,38 @@ export function buildConstraintTimeline(book: Book): ConstraintTimelineItem[] {
           event: rule.event,
           target,
           startChapterNumber: null,
+          endChapterNumber: target?.chapterNumber ?? null,
+        };
+      }
+      case "never": {
+        return {
+          ...base,
+          kind: "never" as const,
+          subject: rule.subject,
+          startChapterNumber: firstChapterNumber,
+          endChapterNumber: null,
+        };
+      }
+      case "prevent": {
+        const target = resolveConditionTarget(book, rule.until);
+        return {
+          ...base,
+          kind: "prevent" as const,
+          event: rule.event,
+          target,
+          startChapterNumber: firstChapterNumber,
+          endChapterNumber: target?.chapterNumber ?? null,
+        };
+      }
+      case "cannot": {
+        const target = resolveConditionTarget(book, rule.until);
+        return {
+          ...base,
+          kind: "cannot" as const,
+          actor: rule.actor,
+          action: rule.action,
+          target,
+          startChapterNumber: firstChapterNumber,
           endChapterNumber: target?.chapterNumber ?? null,
         };
       }

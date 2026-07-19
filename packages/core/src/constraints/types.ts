@@ -1,4 +1,4 @@
-export type ConstraintRule = ForbidRule | RequireRule;
+export type ConstraintRule = ForbidRule | RequireRule | NeverRule | PreventRule | CannotRule;
 
 export interface ForbidRule {
   kind: "forbid";
@@ -16,6 +16,59 @@ export interface RequireRule {
     targetType: "chapter" | "event";
     targetId: string;
   };
+}
+
+export interface NeverRule {
+  kind: "never";
+  subject: string;
+}
+
+export interface PreventRule {
+  kind: "prevent";
+  event: string;
+  until: CausalCondition;
+}
+
+export interface CannotRule {
+  kind: "cannot";
+  actor: string;
+  action: string;
+  until: CausalCondition;
+}
+
+export type CausalCondition =
+  | ChapterCondition
+  | EventCondition
+  | KnowledgeCondition
+  | EmotionCondition
+  | StateCondition;
+
+export interface ChapterCondition {
+  kind: "chapter";
+  targetId: string;
+}
+
+export interface EventCondition {
+  kind: "event";
+  targetId: string;
+}
+
+export interface KnowledgeCondition {
+  kind: "knows";
+  actor: string;
+  fact: string;
+}
+
+export interface EmotionCondition {
+  kind: "feels";
+  actor: string;
+  emotion: string;
+  toward?: string;
+}
+
+export interface StateCondition {
+  kind: "state";
+  description: string;
 }
 
 export interface Constraint {
@@ -67,7 +120,28 @@ export interface RequireTimelineItem extends ConstraintTimelineItemBase {
   event: string;
 }
 
-export type ConstraintTimelineItem = ForbidTimelineItem | RequireTimelineItem;
+export interface NeverTimelineItem extends ConstraintTimelineItemBase {
+  kind: "never";
+  subject: string;
+}
+
+export interface PreventTimelineItem extends ConstraintTimelineItemBase {
+  kind: "prevent";
+  event: string;
+}
+
+export interface CannotTimelineItem extends ConstraintTimelineItemBase {
+  kind: "cannot";
+  actor: string;
+  action: string;
+}
+
+export type ConstraintTimelineItem =
+  | ForbidTimelineItem
+  | RequireTimelineItem
+  | NeverTimelineItem
+  | PreventTimelineItem
+  | CannotTimelineItem;
 
 export class ConstraintParseError extends Error {
   constructor(message: string) {
